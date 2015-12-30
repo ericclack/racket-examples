@@ -79,9 +79,12 @@ TODO:
           (bullet-speed b)))
 
 (define (hit-asteroids asteroids bullets)
-  ;; If any asteroids have been hit, split them in half
+  ;; If any asteroids have been hit, split them in half.
+  ;; Asteroids that are too small are deleted.
+  
   ;; A list like this (a a a a a) will result in a list
-  ;; like this (a a (a a) a a)
+  ;; like this (a a (a a) a a) on hit, we use flatten
+  ;; to return the right thing.
  
   (define (hit-asteroid a bullets)
     ;; Has this asteroid been hit by any of the bullets?
@@ -92,10 +95,21 @@ TODO:
       [else
        (hit-asteroid a (cdr bullets))]))
 
-  (define (no-bullets-hit-asteroid a)
-    (not (hit-asteroid a bullets)))
+  (define (split-asteroid a)
+    (list (asteroid (asteroid-pos a) (- (asteroid-direction a) 90)
+                    (asteroid-speed a) (/ (asteroid-size a) 2))
+          (asteroid (asteroid-pos a) (+ (asteroid-direction a) 90)
+                    (asteroid-speed a) (/ (asteroid-size a) 2))))
+
+  (define (bullets-hit-asteroid a)
+    (if (hit-asteroid a bullets)
+        (split-asteroid a)
+        a))
+
+  (define (big-enough a)
+    (> (asteroid-size a) 5))
   
-  (filter no-bullets-hit-asteroid asteroids))
+  (filter big-enough (flatten (map bullets-hit-asteroid asteroids))))
 
 (define (next-world w)
   (world (map move-asteroid
