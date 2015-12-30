@@ -127,13 +127,19 @@ TODO:
 
   (filter bullet-hit-no-asteroids bullets))
 
+(define (move-ship a-ship)
+  (ship (wrap-pos
+         (move-pos (ship-pos a-ship) (ship-direction a-ship) (ship-speed a-ship))
+         30)
+        (ship-direction a-ship)
+        (ship-speed a-ship)))
   
 (define (next-world w)
   (define next-asteroids (hit-asteroids (world-asteroids w) (world-bullets w)))
   (define next-bullets (live-bullets (world-asteroids w) (world-bullets w)))
   
   (world (map move-asteroid next-asteroids)
-         (world-ship w)
+         (move-ship (world-ship w))
          (filter bullet-in-range (map move-bullet next-bullets))))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -177,19 +183,24 @@ TODO:
 (define (direct-ship w a-key)
   (define a-ship (world-ship w))
   (define a-direction
+    (+ (ship-direction a-ship)
     (cond
-      [(key=? a-key "left")
-       (- (ship-direction a-ship) 5)]
-      [(key=? a-key "right")
-       (+ (ship-direction a-ship) 5)]
-      [else (ship-direction a-ship)]))
+      [(key=? a-key "left") -5]
+      [(key=? a-key "right") 5]
+      [else 0])))
+  (define a-speed
+    (+ (ship-speed a-ship)
+       (cond
+         [(key=? a-key "up") 1]
+         [(key=? a-key "down") -1]
+         [else 0])))
   (define bullets
     (cond
       [(key=? a-key " ") (cons (new-bullet a-ship) (world-bullets w))]
       [else (world-bullets w)]))
 
   (world (world-asteroids w)
-         (ship (ship-pos a-ship) a-direction (ship-speed a-ship))
+         (ship (ship-pos a-ship) a-direction a-speed)
          bullets))
 
 (define (go)
