@@ -123,10 +123,14 @@ TODO:
 (define (img+scene pos img scene)
   (place-image img (pos-x pos) (pos-y pos) scene))
 
+(define (ship-img a-direction)
+  (rotate (- 270 a-direction)
+          (overlay/offset (triangle 30 "solid" "white") 0 8
+                          (triangle 30 "solid" "white"))))
+
 (define (ship+scene a-ship scene)
   (img+scene (ship-pos a-ship)
-             (rotate (ship-direction a-ship)
-                     (triangle 40 "solid" "white"))
+             (ship-img (ship-direction a-ship))
              scene))
 
 (define (asteroids+scene asteroids scene)
