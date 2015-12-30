@@ -9,8 +9,8 @@ Challenge: How to avoid practicing mistakes or quick
 corrections, wait for the player to remember first?
 
 TODO:
-- Blue colouring for easy notes only considers default set
-- Play easy-notes less often
+- Show current note and the next one?
+- Add drills to practice strings or pairs of strings?
 - Sort easy-notes for better display, or show them on
   the stave?
 - Save easy-notes for next time, so that the player
@@ -108,9 +108,10 @@ TODO:
   (>= (note-pos-relative-b4 a-note) 0))
 
 (define (note-img a-note)
+  ;; A note, with a hint for open strings
   (circle 10
           (if (member a-note OPEN-STRINGS) "outline" "solid")
-          (if (member a-note EASY-NOTES) "blue" "black")))
+          "black"))
 
 (define (show-note a-note)
   ;; Show the note on the stave with extenders and the G-Clef
