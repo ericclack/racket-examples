@@ -3,8 +3,10 @@
 #|
 
 TODO:
+- Bullet speed added to craft speed
+- Ship crashing into asteroids + lives
+- Don't start asteroids on top of ship
 - Score
-- Moving ship
 |#
 
 (require 2htdp/universe 2htdp/image)
@@ -19,6 +21,7 @@ TODO:
 (define BIG-ASTEROID 60)
 (define NUM-ASTEROIDS 5)
 (define BULLET-SPEED 5)
+(define SHIP-SIZE 30)
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -28,7 +31,7 @@ TODO:
 
 (define (new-asteroid)
   (asteroid (pos (random WIDTH) (random HEIGHT))
-            (random 360) (+ 1 (random 2)) (random BIG-ASTEROID)))
+            (random 360) (+ 1 (random 2)) BIG-ASTEROID))
 
 (define (move-pos a-pos a-direction a-speed)
   (define r (degrees->radians a-direction))
@@ -69,7 +72,7 @@ TODO:
 (define (new-bullet a-ship)
   (bullet (ship-pos a-ship)
           (ship-direction a-ship)
-          BULLET-SPEED))
+          (+ (ship-speed a-ship) BULLET-SPEED)))
 
 (define (move-bullet b)
   (bullet (move-pos (bullet-pos b) (bullet-direction b) (bullet-speed b))
@@ -130,7 +133,7 @@ TODO:
 (define (move-ship a-ship)
   (ship (wrap-pos
          (move-pos (ship-pos a-ship) (ship-direction a-ship) (ship-speed a-ship))
-         30)
+         SHIP-SIZE)
         (ship-direction a-ship)
         (ship-speed a-ship)))
   
@@ -150,8 +153,8 @@ TODO:
 
 (define (ship-img a-direction)
   (rotate (- 270 a-direction)
-          (overlay/offset (triangle 30 "solid" "white") 0 8
-                          (triangle 30 "solid" "white"))))
+          (overlay/offset (triangle SHIP-SIZE "solid" "white") 0 8
+                          (triangle SHIP-SIZE "solid" "white"))))
 
 (define (ship+scene a-ship scene)
   (img+scene (ship-pos a-ship)
@@ -203,10 +206,32 @@ TODO:
          (ship (ship-pos a-ship) a-direction a-speed)
          bullets))
 
-(define (go)
-  (big-bang (world (times-repeat NUM-ASTEROIDS (new-asteroid))
-                   (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0)
-                   '())
+(define (ship-crashed? w)
+  (define a-ship (world-ship w))
+  (define (ship-hit-asteroids? asteroids)
+    (cond
+      [(empty? asteroids) #f]
+      [(inside-circle (asteroid-pos (car asteroids))
+                      (+ (asteroid-size (car asteroids))
+                         (/ SHIP-SIZE 2))
+                      (ship-pos a-ship)) #t]
+      [else (ship-hit-asteroids? (cdr asteroids))]))
+
+  (ship-hit-asteroids? (world-asteroids w)))
+
+(define (new-world)
+  ;; Produce a world in which the ship has not just crashed
+  (define asteroids (times-repeat NUM-ASTEROIDS (new-asteroid)))
+  (define a-ship (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0))
+  (define a-world
+    (world asteroids a-ship '()))
+  (if (ship-crashed? a-world)
+      (new-world)
+      a-world))
+  
+(define (go) 
+  (big-bang (new-world)
             (on-tick next-world TICK-RATE)
             (on-key direct-ship)
-            (to-draw render-world)))
+            (to-draw render-world)
+            (stop-when ship-crashed?)))
