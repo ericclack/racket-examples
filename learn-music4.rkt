@@ -8,9 +8,15 @@ get less time to play this note next time.
 Challenge: How to avoid practicing mistakes or quick
 corrections, wait for the player to remember first?
 
+CHANGES from v3:
+- Play easy notes less often
+
 TODO:
+- Add drills to practice notes or pairs of notes?
+  (note, note+1 note+2)
+  (note, note-12) (one octave lower)
+  (note, note-3, note-1, note-4...
 - Show current note and the next one?
-- Add drills to practice strings or pairs of strings?
 - Sort easy-notes for better display, or show them on
   the stave?
 - Save easy-notes for next time, so that the player
@@ -43,7 +49,7 @@ TODO:
 ;; The initial set of easy notes for *me* to play - change this
 ;; to suit your needs
 (define EASY-NOTES
-  '(c4 d4 f4 g4))
+  '(e2 f2 g2 a3 g3 b4 c4 d4 e4 f4 g4))
 ;; How likely to skip easy notes (0-1)?
 (define SKIP-EASY-NOTES 0.7)
 
