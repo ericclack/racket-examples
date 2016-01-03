@@ -15,11 +15,11 @@ CHANGES from v3:
   (note, note+2, note+4)
 
 TODO:
+- Show current note and the next one
 - Add back in easy-note logic
 - Add more drills to practice phrases of notes:
   (note, note-12) (one octave lower)
   (note, note-3, note-1, note-4...
-- Show current note and the next one?
 - Sort easy-notes for better display, or show them on
   the stave?
 - Save easy-notes for next time, so that the player
@@ -76,13 +76,18 @@ TODO:
   ((curry above/align) "left"))
 
 (define (stave)
-  (apply above/align-left 
-         (cons (line 300 0 "black")
-               (times-repeat 4
-                             (above/align-left
-                              (line 0 20 "black")
-                              (line 300 0 "black")
-                              )))))
+  (overlay/offset
+   (scale 0.53 G-CLEF)
+   120 -6
+  (overlay
+   (apply above/align-left 
+          (cons (line 300 0 "black")
+                (times-repeat 4
+                              (above/align-left
+                               (line 0 20 "black")
+                               (line 300 0 "black")
+                               ))))
+   (empty-scene WIDTH HEIGHT "white"))))
 
 (define (note-pos-relative-b4 a-note)
   ;; b4 is the middle of the stave
@@ -122,28 +127,27 @@ TODO:
           (if (member a-note OPEN-STRINGS) "outline" "solid")
           "black"))
 
+(define (show-notes notes)
+  ;; Show the notes on the stave with extenders as required
+  (cond
+    [(empty? notes) (stave)]
+    [else
+     (let* ([note (car notes)]
+            [extenders-align (if (extenders-above note) "bottom" "top")])
+       (place-image/align
+        (extenders (note-pos-relative-b4 note))
+        (/ WIDTH 2) (/ HEIGHT 2) "middle" extenders-align
+        (overlay/offset
+         (note-img note)
+         0 (note-y-pos note)
+         (show-notes (cdr notes)))))]))
+
 (define (show-note a-note)
-  ;; Show the note on the stave with extenders and the G-Clef
-  (overlay/offset
-   (scale 0.53 G-CLEF)
-   120 -6
-   (place-image/align
-    (extenders (note-pos-relative-b4 a-note))
-    (/ WIDTH 2) (/ HEIGHT 2) "middle"
-    (if (extenders-above a-note) "bottom" "top")
-    (overlay/offset
-     (note-img a-note)
-     0 (note-y-pos a-note)
-     (overlay
-      (stave) (empty-scene WIDTH HEIGHT "white"))))))
+  (show-notes (list a-note)))
 
 (define (play-note a-note)
   (play (piano-tone 
          (list-ref MIDI-NOTES (note-index a-note)))))
-
-(define (play-and-show-note a-note)
-  (play-note a-note)
-  (show-note a-note))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -230,7 +234,7 @@ TODO:
           15 "black")
     (text "Press any key to add current note" 15 "black"))
    5 5 "left" "top"
-   (show-note (world-note w))))
+   (show-notes (world-phrase w))))
 
 (define (go)
   (define phrase (next-note-phrase))
