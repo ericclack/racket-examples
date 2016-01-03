@@ -59,7 +59,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 2)
+(define TICK-RATE 1)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
@@ -143,9 +143,6 @@ TODO:
   (show-note a-note))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;; big-bang world
-
-(struct world (notes note-phrase plays easy-notes) #:transparent)
 
 (define (next-random-note last-note easy-notes)
   ;; Next random note, but not last-note
@@ -169,24 +166,41 @@ TODO:
   (define phrase (member first-note NOTES))
   (if (> (length phrase) 3)
       (take phrase 3)
-      phrase))
+      (next-random-note-phrase)))
+
+;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;; big-bang world
+
+(struct world (note notes-left phrase plays easy-notes) #:transparent)
 
 (define (next-note w)
-  ;; Play the next note, but first check if we've finished
-  ;; playing this note. If we have, pick a new one.
+  ;; Play the next note from the current phrase, repeat the phrase
+  ;; or generate a new one.
+
   (cond
-    [(zero? (world-plays w))
-     (let* ((note (next-random-note (world-notes w) (world-easy-notes w)))
-           (plays (play-note-times note (world-easy-notes w))))
-       (next-note (world note '() plays (world-easy-notes w))))]
+    [(empty? (world-notes-left w))
+     ;; We've finished playing the phrase
+     (cond
+       [(zero? (world-plays w))
+        ;; Finished repeats, make a new phrase
+        (let* ([phrase (next-random-note-phrase)]
+               [plays 3])
+          (next-note (world (car phrase) phrase phrase
+                            plays (world-easy-notes w))))]
+       [else
+        ;; More repeats left, restart phrase
+        (next-note (world #f (world-phrase w) (world-phrase w)
+                          (sub1 (world-plays w)) (world-easy-notes w)))])]
     [else
-     (play-note (world-notes w))
-     (world (world-notes w) '() (sub1 (world-plays w)) (world-easy-notes w))]))
+     ;; We're still playing the phrase
+     (play-note (car (world-notes-left w)))
+     (world (car (world-notes-left w)) (cdr (world-notes-left w)) (world-phrase w)
+            (world-plays w) (world-easy-notes w))]))
 
 (define (easy-note w a-key)
   ;; The user finds the current note easy - stop playing it
   ;; and add it to the set
-  (let ((note (world-notes w))
+  (let ((note (world-note w))
         (easy-notes (world-easy-notes w)))
     (world note 0
            (if (member note easy-notes)
@@ -201,10 +215,11 @@ TODO:
           15 "black")
     (text "Press any key to add current note" 15 "black"))
    5 5 "left" "top"
-   (show-note (world-notes w))))
+   (show-note (world-note w))))
 
 (define (go)
-  (big-bang (world (random-choice NOTES) '() 0 EASY-NOTES)
+  (define phrase (next-random-note-phrase))
+  (big-bang (world (car phrase) phrase phrase 3 EASY-NOTES)
             (on-tick next-note TICK-RATE)
             (on-key easy-note)
             (to-draw render-scene)))
