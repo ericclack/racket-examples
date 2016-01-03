@@ -2,15 +2,16 @@
 
 (require rackunit "learn-music-phrase1.rkt")
 (require "util.rkt")
-(require/expose "learn-music-phrase1.rkt" (NOTES next-note-phrase-123
-                                          next-note-phrase-135
+(require/expose "learn-music-phrase1.rkt" (NOTES random-note-phrase-123
+                                          random-note-phrase-135
+                                          random-note-phrase pick-notes
                                           note-index world))
 
 (test-case
- "tests for next-note-phrase-123"
- (check-true (list? (next-note-phrase-123)))
- (times-repeat 100 (check-equal? (length (next-note-phrase-123)) 3))
- (let* ((phrase (next-note-phrase-123))
+ "tests for random-note-phrase-123"
+ (check-true (list? (random-note-phrase-123)))
+ (times-repeat 100 (check-equal? (length (random-note-phrase-123)) 3))
+ (let* ((phrase (random-note-phrase-123))
         (n1 (first phrase))
         (n2 (second phrase))
         (n3 (third phrase)))
@@ -20,10 +21,10 @@
  )
 
 (test-case
- "tests for next-note-phrase-135"
- (check-true (list? (next-note-phrase-135)))
- (times-repeat 100 (check-equal? (length (next-note-phrase-135)) 3))
- (let* ((phrase (next-note-phrase-135))
+ "tests for random-note-phrase-135"
+ (check-true (list? (random-note-phrase-135)))
+ (times-repeat 100 (check-equal? (length (random-note-phrase-135)) 3))
+ (let* ((phrase (random-note-phrase-135))
         (n1 (first phrase))
         (n2 (second phrase))
         (n3 (third phrase)))
@@ -40,3 +41,12 @@
                '(a c e g))
  (check-equal? (every-other '()) '())
  (check-equal? (every-other '(a)) '(a)))
+
+(test-case
+ "tests for pick-notes"
+ (check-equal? (pick-notes '(1 3 5) '(a b c d e f))
+               '(a c e)))
+
+(test-case
+ "tests for random-note-phrase"
+ (check-true (list? (random-note-phrase '(1 5 7)))))

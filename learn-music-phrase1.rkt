@@ -62,7 +62,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 1)
+(define TICK-RATE 0.4)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
@@ -142,19 +142,7 @@ TODO:
                               (empty-scene 15 0) scene))
          (empty-scene 15 0)
          notes))
-  
-#|
-  (let* ([note (car notes)]
-         [extenders-align (if (extenders-above note) "bottom" "top")])
-    (place-image/align
-     (extenders (note-pos-relative-b4 note))
-     (/ WIDTH 2) (/ HEIGHT 2) "middle" extenders-align
-     (overlay/offset
-      (note-img note)
-      0 (note-y-pos note)
-      (show-notes (cdr notes))))))  
-|#
-  
+    
 (define (show-notes notes)
   (overlay
    (note-phrase-img notes)
@@ -185,24 +173,29 @@ TODO:
 ;; The procs next-note-phrase-??? return a sequence of notes
 ;; that make some kind of pleasing phrase
 
-(define (next-note-phrase-123)
-  (define first-note (next-random-note #f '()))
-  (define phrase (member first-note NOTES))
-  (if (> (length phrase) 3)
-      (take phrase 3)
-      (next-note-phrase)))
+(define (random-note-phrase-123)
+  (random-note-phrase '(1 2 3)))
 
-(define (next-note-phrase-135)
+(define (random-note-phrase-135)
+  (random-note-phrase '(1 3 5)))
+
+(define (pick-notes deltas notes)
+  (cond
+    [(empty? deltas) '()]
+    [else (cons (list-ref notes (- (car deltas) 1))
+                (pick-notes (cdr deltas) notes))]))
+
+(define (random-note-phrase deltas)
   (define first-note (next-random-note #f '()))
-  (define phrase (member first-note NOTES))
-  (if (> (length phrase) 5)
-      (take (every-other phrase) 3)
-      (next-note-phrase-135)))
-         
+  (define notes (member first-note NOTES))
+  (define max-delta (apply max deltas))
+  (if (< (length notes) max-delta)
+      (random-note-phrase deltas)
+      (pick-notes deltas notes)))
 
 ;; Which type of note phrase to use?
 (define (next-note-phrase)
-  ((random-choice (list next-note-phrase-123 next-note-phrase-135))))
+  (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)))))
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
