@@ -10,10 +10,11 @@ corrections, wait for the player to remember first?
 
 CHANGES from v3:
 - Play easy notes less often
+- Add drills to practice phrases of notes:
+  (note, note+1 note+2)
 
 TODO:
-- Add drills to practice notes or pairs of notes?
-  (note, note+1 note+2)
+- Add drills to practice phrases of notes:
   (note, note-12) (one octave lower)
   (note, note-3, note-1, note-4...
 - Show current note and the next one?
@@ -157,16 +158,27 @@ TODO:
 (define (play-note-times a-note easy-notes)
   (if (member a-note easy-notes) 2 4))
 
-(define (next-random-note-phrase)
-  ;; Return a sequence of notes that make some kind
-  ;; of pleasing phrase
+;; The procs next-note-phrase-??? return a sequence of notes
+;; that make some kind of pleasing phrase
 
-  ;; Simple n, n+1, n+2 sequence
+(define (next-note-phrase-123)
   (define first-note (next-random-note #f '()))
   (define phrase (member first-note NOTES))
   (if (> (length phrase) 3)
       (take phrase 3)
-      (next-random-note-phrase)))
+      (next-note-phrase)))
+
+(define (next-note-phrase-135)
+  (define first-note (next-random-note #f '()))
+  (define phrase (member first-note NOTES))
+  (if (> (length phrase) 5)
+      (take (every-other phrase) 3)
+      (next-note-phrase-135)))
+         
+
+;; Which type of note phrase to use?
+(define next-note-phrase next-note-phrase-135)
+
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; big-bang world
@@ -183,7 +195,7 @@ TODO:
      (cond
        [(zero? (world-plays w))
         ;; Finished repeats, make a new phrase
-        (let* ([phrase (next-random-note-phrase)]
+        (let* ([phrase (next-note-phrase)]
                [plays 3])
           (next-note (world (car phrase) phrase phrase
                             plays (world-easy-notes w))))]
@@ -218,7 +230,7 @@ TODO:
    (show-note (world-note w))))
 
 (define (go)
-  (define phrase (next-random-note-phrase))
+  (define phrase (next-note-phrase))
   (big-bang (world (car phrase) phrase phrase 3 EASY-NOTES)
             (on-tick next-note TICK-RATE)
             (on-key easy-note)

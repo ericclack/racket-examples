@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require racket/list)
+
 (define-syntax-rule (times-repeat n fn)
   (for/list ([i (in-range n)])
     fn))
@@ -14,4 +16,12 @@
   ;; Randomly return +exp or -exp
   (* exp (random-choice (list -1 1))))
 
-(provide times-repeat random-range random-choice random-sign)
+(define (every-other list)
+  (cond
+    [(empty? list) '()]
+    [(= (length list) 1) list]
+    [else
+     (cons (car list) (every-other (cddr list)))]))
+
+(provide times-repeat random-range random-choice random-sign
+         every-other)
