@@ -2,10 +2,12 @@
 
 #|
 
-TODO:
-- Bullet speed added to craft speed
-- Ship crashing into asteroids + lives
+DONE:
 - Don't start asteroids on top of ship
+- Bullet speed added to craft speed
+
+TODO:
+- Ship crashing into asteroids + lives
 - Score
 |#
 
