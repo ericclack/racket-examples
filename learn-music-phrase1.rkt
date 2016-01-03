@@ -127,20 +127,38 @@ TODO:
           (if (member a-note OPEN-STRINGS) "outline" "solid")
           "black"))
 
+(define (note-on-stave-img a-note)
+  (place-image/align
+   (extenders (note-pos-relative-b4 a-note))
+   (/ WIDTH 2) (/ HEIGHT 2) "middle" (if (extenders-above a-note) "bottom" "top")
+   (overlay/offset
+    (note-img a-note)
+    0 (note-y-pos a-note)
+    (empty-scene 0 HEIGHT))))
+
+(define (note-phrase-img notes)
+  ;; A sequence of notes including extenders
+  (foldr (λ (n scene) (beside (note-on-stave-img n)
+                              (empty-scene 15 0) scene))
+         (empty-scene 15 0)
+         notes))
+  
+#|
+  (let* ([note (car notes)]
+         [extenders-align (if (extenders-above note) "bottom" "top")])
+    (place-image/align
+     (extenders (note-pos-relative-b4 note))
+     (/ WIDTH 2) (/ HEIGHT 2) "middle" extenders-align
+     (overlay/offset
+      (note-img note)
+      0 (note-y-pos note)
+      (show-notes (cdr notes))))))  
+|#
+  
 (define (show-notes notes)
-  ;; Show the notes on the stave with extenders as required
-  (cond
-    [(empty? notes) (stave)]
-    [else
-     (let* ([note (car notes)]
-            [extenders-align (if (extenders-above note) "bottom" "top")])
-       (place-image/align
-        (extenders (note-pos-relative-b4 note))
-        (/ WIDTH 2) (/ HEIGHT 2) "middle" extenders-align
-        (overlay/offset
-         (note-img note)
-         0 (note-y-pos note)
-         (show-notes (cdr notes)))))]))
+  (overlay
+   (note-phrase-img notes)
+   (stave)))
 
 (define (show-note a-note)
   (show-notes (list a-note)))
