@@ -145,7 +145,7 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; big-bang world
 
-(struct world (note plays easy-notes) #:transparent)
+(struct world (notes note-phrase plays easy-notes) #:transparent)
 
 (define (next-random-note last-note easy-notes)
   ;; Next random note, but not last-note
@@ -160,22 +160,33 @@ TODO:
 (define (play-note-times a-note easy-notes)
   (if (member a-note easy-notes) 2 4))
 
+(define (next-random-note-phrase)
+  ;; Return a sequence of notes that make some kind
+  ;; of pleasing phrase
+
+  ;; Simple n, n+1, n+2 sequence
+  (define first-note (next-random-note #f '()))
+  (define phrase (member first-note NOTES))
+  (if (> (length phrase) 3)
+      (take phrase 3)
+      phrase))
+
 (define (next-note w)
   ;; Play the next note, but first check if we've finished
   ;; playing this note. If we have, pick a new one.
   (cond
     [(zero? (world-plays w))
-     (let* ((note (next-random-note (world-note w) (world-easy-notes w)))
+     (let* ((note (next-random-note (world-notes w) (world-easy-notes w)))
            (plays (play-note-times note (world-easy-notes w))))
-       (next-note (world note plays (world-easy-notes w))))]
+       (next-note (world note '() plays (world-easy-notes w))))]
     [else
-     (play-note (world-note w))
-     (world (world-note w) (sub1 (world-plays w)) (world-easy-notes w))]))
+     (play-note (world-notes w))
+     (world (world-notes w) '() (sub1 (world-plays w)) (world-easy-notes w))]))
 
 (define (easy-note w a-key)
   ;; The user finds the current note easy - stop playing it
   ;; and add it to the set
-  (let ((note (world-note w))
+  (let ((note (world-notes w))
         (easy-notes (world-easy-notes w)))
     (world note 0
            (if (member note easy-notes)
@@ -190,12 +201,12 @@ TODO:
           15 "black")
     (text "Press any key to add current note" 15 "black"))
    5 5 "left" "top"
-   (show-note (world-note w))))
+   (show-note (world-notes w))))
 
 (define (go)
-  (big-bang (world (random-choice NOTES) 0 EASY-NOTES)
+  (big-bang (world (random-choice NOTES) '() 0 EASY-NOTES)
             (on-tick next-note TICK-RATE)
             (on-key easy-note)
             (to-draw render-scene)))
 
-(go)
+;;(go)
