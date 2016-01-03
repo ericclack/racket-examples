@@ -12,9 +12,11 @@ CHANGES from v3:
 - Play easy notes less often
 - Add drills to practice phrases of notes:
   (note, note+1 note+2)
+  (note, note+2, note+4)
 
 TODO:
-- Add drills to practice phrases of notes:
+- Add back in easy-note logic
+- Add more drills to practice phrases of notes:
   (note, note-12) (one octave lower)
   (note, note-3, note-1, note-4...
 - Show current note and the next one?
@@ -177,7 +179,8 @@ TODO:
          
 
 ;; Which type of note phrase to use?
-(define next-note-phrase next-note-phrase-135)
+(define (next-note-phrase)
+  ((random-choice (list next-note-phrase-123 next-note-phrase-135))))
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,10 +196,10 @@ TODO:
     [(empty? (world-notes-left w))
      ;; We've finished playing the phrase
      (cond
-       [(zero? (world-plays w))
+       [(= 1 (world-plays w))
         ;; Finished repeats, make a new phrase
         (let* ([phrase (next-note-phrase)]
-               [plays 3])
+               [plays 4])
           (next-note (world (car phrase) phrase phrase
                             plays (world-easy-notes w))))]
        [else
@@ -231,7 +234,7 @@ TODO:
 
 (define (go)
   (define phrase (next-note-phrase))
-  (big-bang (world (car phrase) phrase phrase 3 EASY-NOTES)
+  (big-bang (world (car phrase) phrase phrase 4 EASY-NOTES)
             (on-tick next-note TICK-RATE)
             (on-key easy-note)
             (to-draw render-scene)))
