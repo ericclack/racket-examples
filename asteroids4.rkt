@@ -2,6 +2,12 @@
 
 #|
 
+Asteroids - (go) to run.
+
+Left / right to rotate
+Up / down to speed up, slow down
+Space to fire.
+
 DONE:
 - Score
 
