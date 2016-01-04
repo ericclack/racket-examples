@@ -9,17 +9,15 @@ Challenge: How to avoid practicing mistakes or quick
 corrections, wait for the player to remember first?
 
 CHANGES from v3:
-- Play easy notes less often
 - Add drills to practice phrases of notes:
   (note, note+1 note+2)
   (note, note+2, note+4)
+  etc
+- Show current note and the next one
 
 TODO:
-- Show current note and the next one
-- Add back in easy-note logic
-- Add more drills to practice phrases of notes:
-  (note, note-12) (one octave lower)
-  (note, note-3, note-1, note-4...
+- Enable descending scales with `random-note-phrase`
+- Add back in easy-note logic - play easy notes less often
 - Sort easy-notes for better display, or show them on
   the stave?
 - Save easy-notes for next time, so that the player
@@ -38,10 +36,10 @@ TODO:
 
 ;; What notes do we want to practice?
 (define NOTES
-  '(e2 f2 g2 a3 b3 c3 d3 e3 f3 g3 a4 b4 c4 d4 e4 f4 g4)) 
+  '(e2 f2 g2 a3 b3 c3 d3 e3 f3 g3 a4 b4 c4 d4 e4 f4 g4 a5 b5 c5)) 
 ;; We need MIDI numbers to play them, these are the standard set
 (define PIANO-MIDI-NOTES
-  '(52 53 55 57 59 60 62 64 65 67 69 71 72 74 76 77 79)) 
+  '(52 53 55 57 59 60 62 64 65 67 69 71 72 74 76 77 79 81 83 84)) 
 ;; Guitar midi notes are one octave lower
 (define MIDI-NOTES
   (map (λ (x) (- x 12)) PIANO-MIDI-NOTES))
@@ -62,7 +60,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 0.4)
+(define TICK-RATE 1)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
@@ -97,27 +95,33 @@ TODO:
 (define (note-y-pos a-note)
   (* PIX-PER-NOTE (note-pos-relative-b4 a-note)))
 
-(define (extender-line)
+(define (ledger-line)
   (line 30 0 "black"))
 
-(define (extenders a-note-pos)
-  ;; Draw extenders from b4 up or down to note
-  ;; the first few will be obscured by the 5 stave lines
+(define (ledger-lines a-note)
+  (define num-lines
+    (/ (- (abs (note-pos-relative-b4 a-note)) 4) 2))
+  (define ledger-images
+    (times-repeat num-lines (ledger-line)))
+  (define ledger-lines-img
+    (foldr (λ (i scene) (above i (empty-scene 0 PIX-BETWEEN-LINES) scene))
+          (empty-scene 0 0)
+          ledger-images))
 
-  ;; Use absolute value of note pos:
-  (if (< a-note-pos 0) (extenders (- 0 a-note-pos))
-      (cond
-        [(= a-note-pos 0) (extender-line)]
-        ;; No lines at odd note positions
-        [(odd? a-note-pos)
-         (extenders (sub1 a-note-pos))]
-        [(overlay/align/offset
-          "left" "top"
-          (extender-line)
-          0 PIX-BETWEEN-LINES
-          (extenders (sub1 a-note-pos)))])))
-
-(define (extenders-above a-note)
+  (if (ledger-lines-above? a-note)
+      ;; TODO: replace pix numbers with formulae
+      (overlay/align/offset
+       "middle" "bottom"
+       ledger-lines-img
+       0 193
+       (empty-scene 0 HEIGHT))
+      (overlay/align/offset
+       "middle" "top"
+       ledger-lines-img
+       0 -216 
+       (empty-scene 0 HEIGHT))))
+       
+(define (ledger-lines-above? a-note)
   ;; Are the extenders above the stave (or below)?
   (>= (note-pos-relative-b4 a-note) 0))
 
@@ -127,10 +131,9 @@ TODO:
           (if (member a-note OPEN-STRINGS) "outline" "solid")
           "black"))
 
-(define (note-on-stave-img a-note)
-  (place-image/align
-   (extenders (note-pos-relative-b4 a-note))
-   (/ WIDTH 2) (/ HEIGHT 2) "middle" (if (extenders-above a-note) "bottom" "top")
+(define (note+ledger-line-img a-note)
+  (overlay
+   (ledger-lines a-note)
    (overlay/offset
     (note-img a-note)
     0 (note-y-pos a-note)
@@ -138,9 +141,9 @@ TODO:
 
 (define (note-phrase-img notes)
   ;; A sequence of notes including extenders
-  (foldr (λ (n scene) (beside (note-on-stave-img n)
-                              (empty-scene 15 0) scene))
-         (empty-scene 15 0)
+  (foldr (λ (n scene) (beside (note+ledger-line-img n)
+                              (empty-scene 10 0) scene))
+         (empty-scene 10 0)
          notes))
     
 (define (show-notes notes)
@@ -195,7 +198,8 @@ TODO:
 
 ;; Which type of note phrase to use?
 (define (next-note-phrase)
-  (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)))))
+  (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)
+                                               (4 2 3 1) (1 8 5)))))
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
