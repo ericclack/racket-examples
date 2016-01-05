@@ -14,16 +14,15 @@ CHANGES from v3:
   (note, note+2, note+4)
   etc
 - Show current note and the next one
+- Add back in easy-note logic for phrases - play them less
+  often
 
 TODO:
-- Enable descending scales with `random-note-phrase`
-- Add back in easy-note logic - play easy notes less often
 - Sort easy-notes for better display, or show them on
   the stave?
 - Save easy-notes for next time, so that the player
   doesn't need to edit the source code
-- Fix display of extenders that should be hidden by
-  stave lines
+- Fix display of ledgers
 |#
 
 (require srfi/1)
@@ -47,12 +46,12 @@ TODO:
 ;; We want to show the open string notes differently
 (define OPEN-STRINGS
   '(e2 a3 d3 g3 b4 e4))
-;; The initial set of easy notes for *me* to play - change this
+;; The initial set of easy phrases for *me* to play - change this
 ;; to suit your needs
-(define EASY-NOTES
-  '(e2 f2 g2 a3 g3 b4 c4 d4 e4 f4 g4))
-;; How likely to skip easy notes (0-1)?
-(define SKIP-EASY-NOTES 0.7)
+(define EASY-PHRASES
+  '((a3 b3 c3) (e4 f4 g4) (a4 b4 c4) (e3 e4 b4) (e3 g3 b4) (g3 a4 b4) (d3 e3 f3)))
+;; How likely to skip easy phrases (0-1)?
+(define SKIP-EASY-PHRASES 0.7)
 
 ;; The canvas
 (define WIDTH 400)
@@ -60,7 +59,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 1)
+(define TICK-RATE 0.75)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
@@ -166,7 +165,7 @@ TODO:
   (define note (random-choice NOTES))
   (if (or (eq? note last-note)
           (and (member note easy-notes)
-               (< (random) SKIP-EASY-NOTES)))
+               (< (random) SKIP-EASY-PHRASES)))
       (next-random-note last-note easy-notes)
       note))
 
@@ -197,15 +196,20 @@ TODO:
       (pick-notes deltas notes)))
 
 ;; Which type of note phrase to use?
-(define (next-note-phrase)
-  (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)
-                                               (4 2 3 1) (1 8 5)))))
+(define (next-note-phrase easy-phrases)
+  (define phrase
+    (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)
+                                                 (4 2 3 1) (1 8 5)))))
+  (if (and (member phrase easy-phrases)
+           (< (random) SKIP-EASY-PHRASES))
+      (next-note-phrase easy-phrases)
+      phrase))
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; big-bang world
 
-(struct world (note notes-left phrase plays easy-notes) #:transparent)
+(struct world (note notes-left phrase plays easy-phrases) #:transparent)
 
 (define (next-note w)
   ;; Play the next note from the current phrase, repeat the phrase
@@ -217,45 +221,46 @@ TODO:
      (cond
        [(= 1 (world-plays w))
         ;; Finished repeats, make a new phrase
-        (let* ([phrase (next-note-phrase)]
+        (let* ([phrase (next-note-phrase (world-easy-phrases w))]
                [plays 4])
           (next-note (world (car phrase) phrase phrase
-                            plays (world-easy-notes w))))]
+                            plays (world-easy-phrases w))))]
        [else
         ;; More repeats left, restart phrase
         (next-note (world #f (world-phrase w) (world-phrase w)
-                          (sub1 (world-plays w)) (world-easy-notes w)))])]
+                          (sub1 (world-plays w)) (world-easy-phrases w)))])]
     [else
      ;; We're still playing the phrase
      (play-note (car (world-notes-left w)))
      (world (car (world-notes-left w)) (cdr (world-notes-left w)) (world-phrase w)
-            (world-plays w) (world-easy-notes w))]))
+            (world-plays w) (world-easy-phrases w))]))
 
-(define (easy-note w a-key)
+(define (easy-phrase w a-key)
   ;; The user finds the current note easy - stop playing it
   ;; and add it to the set
-  (let ((note (world-note w))
-        (easy-notes (world-easy-notes w)))
-    (world note 0
-           (if (member note easy-notes)
-               easy-notes
-               (cons note easy-notes)))))
+  (let ((phrase (world-phrase w))
+        (easy-phrases (world-easy-phrases w)))
+    (world (world-note w) '() phrase 1
+           (if (member phrase easy-phrases)
+               easy-phrases
+               (cons phrase easy-phrases)))))
 
 (define (render-scene w)
   (place-image/align
    (above/align "left"
-    (text (string-append "Easy notes: "
-                         (string-join (map symbol->string (world-easy-notes w)) ", "))
+    (text (string-append "Easy phrases: "
+                         (string-join (map (λ (x) (format "~a" x))
+                                           (world-easy-phrases w)) ", "))
           15 "black")
     (text "Press any key to add current note" 15 "black"))
    5 5 "left" "top"
    (show-notes (world-phrase w))))
 
 (define (go)
-  (define phrase (next-note-phrase))
-  (big-bang (world (car phrase) phrase phrase 4 EASY-NOTES)
+  (define phrase (next-note-phrase EASY-PHRASES))
+  (big-bang (world (car phrase) phrase phrase 4 EASY-PHRASES)
             (on-tick next-note TICK-RATE)
-            (on-key easy-note)
+            (on-key easy-phrase)
             (to-draw render-scene)))
 
-;;(go)
+(go)
