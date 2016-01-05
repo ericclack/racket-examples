@@ -9,11 +9,13 @@ Up / down to speed up, slow down
 Space to fire.
 
 DONE:
-
-TODO:
 - Multiple key presses, e.g. moving and shooting at the
   same time.
+
+TODO:
 - Lives
+- Some motivaton for the user to do more than just fire
+  in circles endlessely - maybe limitted bullets?
 
 |#
 
@@ -273,7 +275,8 @@ TODO:
       (new-world)
       a-world))
   
-(define (go) 
+(define (go)
+  (hash-clear! KEY-STATE)
   (big-bang (new-world)
             (on-tick next-world TICK-RATE)
             (on-key key-down)
