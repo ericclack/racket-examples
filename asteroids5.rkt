@@ -11,11 +11,11 @@ Space to fire.
 DONE:
 - Multiple key presses, e.g. moving and shooting at the
   same time.
+- Some motivaton for the user to do more than just fire
+  in circles endlessely - maybe limitted bullets?
 
 TODO:
 - Lives
-- Some motivaton for the user to do more than just fire
-  in circles endlessely - maybe limitted bullets?
 
 |#
 
@@ -36,6 +36,7 @@ TODO:
 (define NUM-ASTEROIDS 5)
 (define BULLET-SPEED 5)
 (define SHIP-SIZE 30)
+(define MAX-BULLETS 15)
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -244,7 +245,9 @@ TODO:
          [else 0])))
   (define bullets
     (cond
-      [(key-pressed? " ") (cons (new-bullet a-ship) (world-bullets w))]
+      [(and (key-pressed? " ")
+            (< (length (world-bullets w)) MAX-BULLETS)) 
+       (cons (new-bullet a-ship) (world-bullets w))]
       [else (world-bullets w)]))
 
   (world (world-asteroids w)
