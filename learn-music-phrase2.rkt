@@ -8,17 +8,10 @@ get less time to play this note next time.
 Challenge: How to avoid practicing mistakes or quick
 corrections, wait for the player to remember first?
 
-CHANGES from v3:
-- Add drills to practice phrases of notes:
-  (note, note+1 note+2)
-  (note, note+2, note+4)
-  etc
-- Show current note and the next one
-- Add back in easy-note logic for phrases - play them less
-  often
+CHANGES from v1:
+- Fix e2 ledger lines
 
 TODO:
-- Fix e2 ledger lines
 - Bigger display, scalable with some variable
 - Reverse phrases randomly
 - Save easy-notes for next time, so that the player
@@ -100,7 +93,7 @@ TODO:
 
 (define (ledger-lines a-note)
   (define num-lines
-    (/ (- (abs (note-pos-relative-b4 a-note)) 4) 2))
+    (/ (- (abs (note-pos-relative-b4 a-note)) 5) 2))
   (define ledger-images
     (times-repeat num-lines (ledger-line)))
   (define ledger-lines-img
@@ -264,4 +257,4 @@ TODO:
             (on-key easy-phrase)
             (to-draw render-scene)))
 
-(go)
+;;(go)
