@@ -10,9 +10,9 @@ corrections, wait for the player to remember first?
 
 CHANGES from v1:
 - Fix e2 ledger lines
+- Bigger display, scalable with some variable
 
 TODO:
-- Bigger display, scalable with some variable
 - Reverse phrases randomly
 - Save easy-notes for next time, so that the player
   doesn't need to edit the source code
@@ -40,6 +40,12 @@ TODO:
 ;; We want to show the open string notes differently
 (define OPEN-STRINGS
   '(e2 a3 d3 g3 b4 e4))
+
+;; Our phrases to practice, expressed in terms of the root
+;; note 1, so (1 2 3) is the root note and the next two in
+;; the scale
+(define NOTE-PHRASES
+  '((1 2 3) (1 3 5) (1 5 3) (1 5 7) (4 2 3 1) (1 8 5)))
 ;; The initial set of easy phrases for *me* to play - change this
 ;; to suit your needs
 (define EASY-PHRASES
@@ -48,15 +54,15 @@ TODO:
 (define SKIP-EASY-PHRASES 0.7)
 
 ;; The canvas
-(define WIDTH 400)
-(define HEIGHT 300)
+(define WIDTH 500)
+(define HEIGHT 400)
 (define G-CLEF (bitmap "GClef.png"))
+(define NOTE-SIZE 30)
+(define STAVE-WIDTH 400)
 
 ;; How many seconds between notes? Change this to suit your needs
 (define TICK-RATE 0.75)
 
-(define PIX-PER-NOTE 11)
-(define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -67,29 +73,31 @@ TODO:
   ((curry above/align) "left"))
 
 (define (stave)
+  (define scaled-clef-height (* (* NOTE-SIZE 5) 1.35))
   (overlay/offset
-   (scale 0.53 G-CLEF)
-   120 -6
+   (scale (/ scaled-clef-height (image-height G-CLEF)) G-CLEF)
+   140 (+ 1 (- 0 (/ NOTE-SIZE 3)))
   (overlay
    (apply above/align-left 
-          (cons (line 300 0 "black")
+          (cons (line STAVE-WIDTH 0 "black")
                 (times-repeat 4
                               (above/align-left
-                               (line 0 20 "black")
-                               (line 300 0 "black")
+                               (line 0 (- NOTE-SIZE 1) "black")
+                               (line STAVE-WIDTH 0 "black")
                                ))))
    (empty-scene WIDTH HEIGHT "white"))))
 
 (define (note-pos-relative-b4 a-note)
   ;; b4 is the middle of the stave
   ;; b4 = 0, a4 = -1, c4 = 1, etc
-  (- (note-index a-note) PIX-PER-NOTE))
+  (define b4-pos (note-index 'b4))
+  (- (note-index a-note) b4-pos))
 
 (define (note-y-pos a-note)
-  (* PIX-PER-NOTE (note-pos-relative-b4 a-note)))
+  (* (/ NOTE-SIZE 2) (note-pos-relative-b4 a-note)))
 
 (define (ledger-line)
-  (line 30 0 "black"))
+  (line (* NOTE-SIZE 1.3) 0 "black"))
 
 (define (ledger-lines a-note)
   (define num-lines
@@ -97,7 +105,7 @@ TODO:
   (define ledger-images
     (times-repeat num-lines (ledger-line)))
   (define ledger-lines-img
-    (foldr (λ (i scene) (above i (empty-scene 0 PIX-BETWEEN-LINES) scene))
+    (foldr (λ (i scene) (above i (empty-scene 0 NOTE-SIZE) scene))
           (empty-scene 0 0)
           ledger-images))
 
@@ -106,12 +114,12 @@ TODO:
       (overlay/align/offset
        "middle" "bottom"
        ledger-lines-img
-       0 193
+       0 (+ (/ HEIGHT 2) (* NOTE-SIZE 2))
        (empty-scene 0 HEIGHT))
       (overlay/align/offset
        "middle" "top"
        ledger-lines-img
-       0 -216 
+       0 (- 0 (+ (/ HEIGHT 2) (* NOTE-SIZE 3))) 
        (empty-scene 0 HEIGHT))))
        
 (define (ledger-lines-above? a-note)
@@ -120,9 +128,9 @@ TODO:
 
 (define (note-img a-note)
   ;; A note, with a hint for open strings
-  (circle 10
-          (if (member a-note OPEN-STRINGS) "outline" "solid")
-          "black"))
+  (circle (/ NOTE-SIZE 2)
+          "solid"
+          (if (member a-note OPEN-STRINGS) "darkgreen" "black")))
 
 (define (note+ledger-line-img a-note)
   (overlay
@@ -135,8 +143,8 @@ TODO:
 (define (note-phrase-img notes)
   ;; A sequence of notes including extenders
   (foldr (λ (n scene) (beside (note+ledger-line-img n)
-                              (empty-scene 10 0) scene))
-         (empty-scene 10 0)
+                              (empty-scene (/ NOTE-SIZE 2) 0) scene))
+         (empty-scene (/ NOTE-SIZE 2) 0)
          notes))
     
 (define (show-notes notes)
@@ -191,9 +199,8 @@ TODO:
 
 ;; Which type of note phrase to use?
 (define (next-note-phrase easy-phrases)
-  (define phrase
-    (random-note-phrase (random-choice '((1 2 3) (1 3 5) (1 5 3) (1 5 7)
-                                                 (4 2 3 1) (1 8 5)))))
+  (define phrase (random-note-phrase
+                  (random-choice NOTE-PHRASES)))
   (if (and (member phrase easy-phrases)
            (< (random) SKIP-EASY-PHRASES))
       (next-note-phrase easy-phrases)
