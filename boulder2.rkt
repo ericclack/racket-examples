@@ -7,8 +7,10 @@ Boulder Dash clone
 DONE:
 - Add boulders and gems to landscape
 - Make boulders fall
+- Store 'fred in landscape so that falling boulders works
 
 TODO:
+- Inconsistent use of block for struct and symbol
 - Pushing boulders
 - Fred blanks out falling boulders sometimes
 - Collect gems
@@ -20,8 +22,8 @@ TODO:
 (require "util.rkt")
 
 ;; Debug
-(require unstable/debug)
-(require racket/trace)
+;;(require unstable/debug)
+;;(require racket/trace)
 
 (define WIDTH 16)
 (define HEIGHT 16)
@@ -51,6 +53,12 @@ TODO:
 (define (vec-index a-pos)
   (+ (* (pos-y a-pos) WIDTH) (pos-x a-pos)))
 
+(define (set-block! a-landscape a-pos what)
+  (vector-set! a-landscape (vec-index a-pos) what))
+
+(define (clear-block! a-landscape a-pos)
+  (set-block! a-landscape a-pos 0))
+
 (define (pos->px p)
   (+ (/ BLOCK-SIZE 2) (* p BLOCK-SIZE)))
 
@@ -78,16 +86,6 @@ TODO:
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-(define (fred-can-move a-landscape a-fred dx dy)
-  (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
-          '(0 mud gem)))
-
-(define (move-fred a-landscape a-fred dx dy)
-  (define p (fred-pos a-fred))
-  (if (fred-can-move a-landscape a-fred dx dy)
-      (fred (move-pos p dx dy))
-      a-fred))
-
 (define (random-block)
   ;; mud is more likely
   (random-choice '(mud mud mud mud mud mud mud
@@ -110,32 +108,46 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Events
 
-(define (clear-freds-block! a-landscape a-fred)
-  (vector-set! a-landscape (vec-index (fred-pos a-fred)) 0))
+(define (set-freds-block! a-landscape old-fred new-fred)
+  (if (not (eq? old-fred new-fred))
+      (begin
+        (clear-block! a-landscape (fred-pos old-fred))
+        (set-block! a-landscape (fred-pos new-fred) 'fred))
+      #f))
 
 (define (boulders-fall! a-landscape)
   (define boulders (landscape-filter a-landscape 'boulder))
   (for ([b (filter (curry can-fall a-landscape) boulders)])
-    (vector-set! a-landscape (vec-index (block-pos b)) 0)
-    (vector-set! a-landscape (vec-index (move-pos (block-pos b) 0 1))
-                 (block-what b))
+    (clear-block! a-landscape (block-pos b))
+    (set-block! a-landscape (move-pos (block-pos b) 0 1)
+                (block-what b))
     ))
 
 (define (next-world w)
   (boulders-fall! (world-landscape w))
   w)
 
+(define (fred-can-move a-landscape a-fred dx dy)
+  (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
+          '(0 mud gem)))
+
+(define (try-move-fred a-landscape a-fred dx dy)
+  (define p (fred-pos a-fred))
+  (if (fred-can-move a-landscape a-fred dx dy)
+      (fred (move-pos p dx dy))
+      a-fred))
+
 (define (direct-fred w a-key)
   (define f (world-fred w))
   (define l (world-landscape w))
   (define newf
     (cond
-      [(key=? a-key "left") (move-fred l f -1 0)]
-      [(key=? a-key "right") (move-fred l f 1 0)]
-      [(key=? a-key "up") (move-fred l f 0 -1)]
-      [(key=? a-key "down") (move-fred l f 0 1)]
+      [(key=? a-key "left") (try-move-fred l f -1 0)]
+      [(key=? a-key "right") (try-move-fred l f 1 0)]
+      [(key=? a-key "up") (try-move-fred l f 0 -1)]
+      [(key=? a-key "down") (try-move-fred l f 0 1)]
       [else f]))
-  (clear-freds-block! (world-landscape w) newf)
+  (set-freds-block! (world-landscape w) f newf)
   (world (world-landscape w) newf (world-level w)))
 
 (define (fred-dead? w)
