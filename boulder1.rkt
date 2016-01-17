@@ -34,21 +34,39 @@ TODO:
 (define WALL-IMG (bitmap "images/wall.gif"))
 (define GEM-IMG (bitmap "images/gem.gif"))
 
-(define (vec-ref x y)
-  (+ (* y WIDTH) x))
+(define (vec-ref a-pos)
+  (+ (* (pos-y a-pos) WIDTH) (pos-x a-pos)))
 
 (define (pos->px p)
   (+ (/ BLOCK-SIZE 2) (* p BLOCK-SIZE)))
 
+(define (move-fred a-fred dx dy)
+  (define p (fred-pos a-fred))
+  (fred (pos (+ (pos-x p) dx)
+             (+ (pos-y p) dy))))
+
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+;; Events
+
+(define (clear-freds-block! a-landscape a-fred)
+  (vector-set! a-landscape (vec-ref (fred-pos a-fred)) 0))
 
 (define (next-world w)
   w)
 
 (define (direct-fred w a-key)
-  w)
+  (define f (world-fred w))
+  (define newf
+    (cond
+      [(key=? a-key "left") (move-fred f -1 0)]
+      [(key=? a-key "right") (move-fred f 1 0)]
+      [(key=? a-key "up") (move-fred f 0 -1)]
+      [(key=? a-key "down") (move-fred f 0 1)]
+      [else f]))
+  (clear-freds-block! (world-landscape w) f)
+  (world (world-landscape w) newf (world-level w)))
 
-(define (fred-dead w)
+(define (fred-dead? w)
   #f)
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -113,4 +131,4 @@ TODO:
             (on-tick next-world TICK-RATE)
             (on-key direct-fred)
             (to-draw render-world)
-            (stop-when fred-dead)))
+            (stop-when fred-dead?)))
