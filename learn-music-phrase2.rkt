@@ -13,6 +13,9 @@ CHANGES from v1:
 - Bigger display, scalable with some variable
 
 TODO:
+- Drills
+  E.g. (show-notes '(e3 g3 b4 d4 f4))
+       (show-notes '(f3 a4 c4 e4))
 - Reverse phrases randomly
 - Save easy-notes for next time, so that the player
   doesn't need to edit the source code
@@ -61,7 +64,7 @@ TODO:
 (define STAVE-WIDTH 400)
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 0.75)
+(define TICK-RATE 1.5)
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -264,4 +267,4 @@ TODO:
             (on-key easy-phrase)
             (to-draw render-scene)))
 
-;;(go)
+(go)
