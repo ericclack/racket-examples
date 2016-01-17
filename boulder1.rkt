@@ -40,10 +40,22 @@ TODO:
 (define (pos->px p)
   (+ (/ BLOCK-SIZE 2) (* p BLOCK-SIZE)))
 
-(define (move-fred a-fred dx dy)
+(define (move-pos a-pos dx dy)
+  (pos (+ (pos-x a-pos) dx)
+       (+ (pos-y a-pos) dy)))
+
+(define (what_is_next_to a-landscape a-pos dx dy)
+  (vector-ref a-landscape (vec-ref (move-pos a-pos dx dy))))
+
+(define (fred-can-move a-landscape a-fred dx dy)
+  (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
+          '(0 mud gem)))
+
+(define (move-fred a-landscape a-fred dx dy)
   (define p (fred-pos a-fred))
-  (fred (pos (+ (pos-x p) dx)
-             (+ (pos-y p) dy))))
+  (if (fred-can-move a-landscape a-fred dx dy)
+      (fred (move-pos p dx dy))
+      a-fred))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Events
@@ -56,12 +68,13 @@ TODO:
 
 (define (direct-fred w a-key)
   (define f (world-fred w))
+  (define l (world-landscape w))
   (define newf
     (cond
-      [(key=? a-key "left") (move-fred f -1 0)]
-      [(key=? a-key "right") (move-fred f 1 0)]
-      [(key=? a-key "up") (move-fred f 0 -1)]
-      [(key=? a-key "down") (move-fred f 0 1)]
+      [(key=? a-key "left") (move-fred l f -1 0)]
+      [(key=? a-key "right") (move-fred l f 1 0)]
+      [(key=? a-key "up") (move-fred l f 0 -1)]
+      [(key=? a-key "down") (move-fred l f 0 1)]
       [else f]))
   (clear-freds-block! (world-landscape w) f)
   (world (world-landscape w) newf (world-level w)))
