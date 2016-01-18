@@ -85,6 +85,9 @@ TODO:
                           what))
     (block what (pos x y))))
 
+(define (no-gems-left? a-landscape)
+  (empty? (landscape-filter a-landscape 'gem)))
+
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (random-block)
@@ -124,8 +127,12 @@ TODO:
     )))
 
 (define (next-world w)
-  (boulders-fall! (world-landscape w))
-  w)
+  (if (no-gems-left? (world-landscape w))
+      ;; Next level
+      (world (make-landscape) (fred (pos 1 1)) (add1 (world-level w)))
+      (begin
+        (boulders-fall! (world-landscape w))
+        w)))
 
 (define (fred-can-move a-landscape a-fred dx dy)
   (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
