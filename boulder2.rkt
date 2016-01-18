@@ -108,12 +108,9 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Events
 
-(define (set-freds-block! a-landscape old-fred new-fred)
-  (if (not (eq? old-fred new-fred))
-      (begin
-        (clear-block! a-landscape (fred-pos old-fred))
-        (set-block! a-landscape (fred-pos new-fred) 'fred))
-      #f))
+(define (set-freds-block! a-landscape old-pos new-pos)
+        (clear-block! a-landscape old-pos)
+        (set-block! a-landscape new-pos 'fred))
 
 (define (boulders-fall! a-landscape)
   (define boulders (landscape-filter a-landscape 'boulder))
@@ -131,10 +128,14 @@ TODO:
   (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
           '(0 mud gem)))
 
-(define (try-move-fred a-landscape a-fred dx dy)
-  (define p (fred-pos a-fred))
+(define (try-move-fred! a-landscape a-fred dx dy)
+  ;; Change the landscape (fred's pos) and maybe
+  ;; a boulder if fred pushes it
+  (define fp (fred-pos a-fred))
   (if (fred-can-move a-landscape a-fred dx dy)
-      (fred (move-pos p dx dy))
+      (let ([new-pos (move-pos fp dx dy)])
+        (set-freds-block! a-landscape fp new-pos)
+        (fred (move-pos fp dx dy)))
       a-fred))
 
 (define (direct-fred w a-key)
@@ -142,12 +143,11 @@ TODO:
   (define l (world-landscape w))
   (define newf
     (cond
-      [(key=? a-key "left") (try-move-fred l f -1 0)]
-      [(key=? a-key "right") (try-move-fred l f 1 0)]
-      [(key=? a-key "up") (try-move-fred l f 0 -1)]
-      [(key=? a-key "down") (try-move-fred l f 0 1)]
+      [(key=? a-key "left") (try-move-fred! l f -1 0)]
+      [(key=? a-key "right") (try-move-fred! l f 1 0)]
+      [(key=? a-key "up") (try-move-fred! l f 0 -1)]
+      [(key=? a-key "down") (try-move-fred! l f 0 1)]
       [else f]))
-  (set-freds-block! (world-landscape w) f newf)
   (world (world-landscape w) newf (world-level w)))
 
 (define (fred-dead? w)
