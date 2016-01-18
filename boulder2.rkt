@@ -53,11 +53,12 @@ TODO:
 (define (vec-index a-pos)
   (+ (* (pos-y a-pos) WIDTH) (pos-x a-pos)))
 
-(define (set-block! a-landscape a-pos what)
-  (vector-set! a-landscape (vec-index a-pos) what))
+(define (set-block! a-landscape a-block)
+  (vector-set! a-landscape (vec-index (block-pos a-block))
+               (block-what a-block)))
 
 (define (clear-block! a-landscape a-pos)
-  (set-block! a-landscape a-pos 0))
+  (set-block! a-landscape (block 0 a-pos)))
 
 (define (pos->px p)
   (+ (/ BLOCK-SIZE 2) (* p BLOCK-SIZE)))
@@ -106,19 +107,21 @@ TODO:
       [else (random-block)])))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-;; Events
+;; Events & movement
 
 (define (set-freds-block! a-landscape old-pos new-pos)
         (clear-block! a-landscape old-pos)
-        (set-block! a-landscape new-pos 'fred))
+        (set-block! a-landscape (block 'fred new-pos)))
 
 (define (boulders-fall! a-landscape)
   (define boulders (landscape-filter a-landscape 'boulder))
   (for ([b (filter (curry can-fall a-landscape) boulders)])
-    (clear-block! a-landscape (block-pos b))
-    (set-block! a-landscape (move-pos (block-pos b) 0 1)
-                (block-what b))
-    ))
+    (let* ([cur-pos (block-pos b)]
+          [new-pos (move-pos cur-pos 0 1)]
+          [new-boulder (block 'boulder new-pos)])
+      (clear-block! a-landscape cur-pos)
+      (set-block! a-landscape new-boulder)
+    )))
 
 (define (next-world w)
   (boulders-fall! (world-landscape w))
@@ -146,7 +149,7 @@ TODO:
       (if (fred-can-push-boulder a-landscape a-fred dx dy)
           (begin
             (clear-block! a-landscape new-pos)
-            (set-block! a-landscape (move-pos new-pos dx dy) 'boulder)
+            (set-block! a-landscape (block 'boulder (move-pos new-pos dx dy)))
             (set-freds-block! a-landscape cur-pos new-pos)
             (fred new-pos))
           a-fred))))
