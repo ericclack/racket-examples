@@ -8,11 +8,11 @@ DONE:
 - Add boulders and gems to landscape
 - Make boulders fall
 - Store 'fred in landscape so that falling boulders works
+- Pushing boulders
+- Fred blanks out falling boulders sometimes
 
 TODO:
 - Inconsistent use of block for struct and symbol
-- Pushing boulders
-- Fred blanks out falling boulders sometimes
 - Collect gems
 |#
 
@@ -128,15 +128,28 @@ TODO:
   (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
           '(0 mud gem)))
 
+(define (fred-can-push-boulder a-landscape a-fred dx dy)
+  (and (zero? dy)
+       (eq? (what_is_next_to a-landscape (fred-pos a-fred) dx 0) 'boulder)
+       (eq? (what_is_next_to a-landscape (fred-pos a-fred) (* dx 2) 0) 0)))
+
 (define (try-move-fred! a-landscape a-fred dx dy)
-  ;; Change the landscape (fred's pos) and maybe
-  ;; a boulder if fred pushes it
-  (define fp (fred-pos a-fred))
-  (if (fred-can-move a-landscape a-fred dx dy)
-      (let ([new-pos (move-pos fp dx dy)])
-        (set-freds-block! a-landscape fp new-pos)
-        (fred (move-pos fp dx dy)))
-      a-fred))
+  ;; Fred can move if there's mud, gem or empty space.
+  ;; Change the landscape (fred's pos) and maybe a boulder
+  ;; if fred pushes it
+  (let* ([cur-pos (fred-pos a-fred)]
+        [new-pos (move-pos cur-pos dx dy)])
+    (if (fred-can-move a-landscape a-fred dx dy)
+      (begin
+        (set-freds-block! a-landscape cur-pos new-pos)
+        (fred new-pos))
+      (if (fred-can-push-boulder a-landscape a-fred dx dy)
+          (begin
+            (clear-block! a-landscape new-pos)
+            (set-block! a-landscape (move-pos new-pos dx dy) 'boulder)
+            (set-freds-block! a-landscape cur-pos new-pos)
+            (fred new-pos))
+          a-fred))))
 
 (define (direct-fred w a-key)
   (define f (world-fred w))
