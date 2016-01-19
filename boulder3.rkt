@@ -6,10 +6,12 @@ Boulder Dash clone
 
 DONE:
 - Boulder falling on fred ends game
+- Reset level with r
 
 TODO:
+- R to restart the same level, N for a new one
+- Levels get harder
 - Use get-block where appropriate / add get-blocksym?
-- Reset level with r
 - Aliens?
 - Bombs?
 - Make levels harder as you progress
@@ -39,6 +41,7 @@ TODO:
 (struct block (what pos) #:transparent)
   
 (define FRED-IMG (bitmap "images/smallface.gif"))
+(define DEAD-FRED-IMG (bitmap "images/deadfred.png"))
 (define MUD-IMG (bitmap "images/mud.gif"))
 (define BOULDER-IMG (bitmap "images/boulder.png"))
 (define FALLING-BOULDER-IMG (bitmap "images/falling-boulder.png"))
@@ -79,7 +82,7 @@ TODO:
 
 (define (what_is_next_to a-landscape a-pos dx dy)
   ;; What is at a-pos + dx/dy?
-  (vector-ref a-landscape (vec-index (move-pos a-pos dx dy))))
+  (get-blocksym a-landscape (move-pos a-pos dx dy)))
 
 (define (what-is-below a-landscape a-pos)
   (what_is_next_to a-landscape a-pos 0 1))
@@ -198,7 +201,9 @@ TODO:
       [(key=? a-key "up") (try-move-fred! l f 0 -1)]
       [(key=? a-key "down") (try-move-fred! l f 0 1)]
       [else f]))
-  (world (world-landscape w) newf (world-level w) (world-status w)))
+  (if (key=? a-key "r")
+      (world (make-landscape) (fred (pos 1 1)) (world-level w) 'play)
+      (world (world-landscape w) newf (world-level w) (world-status w))))
 
 (define (fred-dead? w)
   ;; Fred is dead if he's not at his location in the landscape
@@ -215,8 +220,10 @@ TODO:
                scene))
 
 (define (fred+scene a-fred scene)
-  (img+scene (fred-pos a-fred) FRED-IMG
-             scene))
+  (img+scene (fred-pos a-fred) FRED-IMG scene))
+
+(define (dead-fred+scene a-fred scene)
+  (img+scene (fred-pos a-fred) DEAD-FRED-IMG scene))
 
 (define (landscape-images a-landscape)
   (map blocksym->img (vector->list a-landscape)))
@@ -232,10 +239,12 @@ TODO:
                 (landscape-posns) scene))
 
 (define (render-world w)
-  (fred+scene (world-fred w)
-              (landscape+scene (world-landscape w)
-                               (empty-scene (* WIDTH BLOCK-SIZE)
-                                            (* HEIGHT BLOCK-SIZE) "black"))))
+  (define scene (landscape+scene (world-landscape w)
+                                 (empty-scene (* WIDTH BLOCK-SIZE)
+                                              (* HEIGHT BLOCK-SIZE) "black")))
+  (if (fred-dead? w)
+      (dead-fred+scene (world-fred w) scene)
+      (fred+scene (world-fred w) scene)))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
