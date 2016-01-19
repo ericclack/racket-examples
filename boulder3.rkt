@@ -5,15 +5,10 @@
 Boulder Dash clone
 
 DONE:
-- Add boulders and gems to landscape
-- Make boulders fall
-- Store 'fred in landscape so that falling boulders works
-- Pushing boulders
-- Fred blanks out falling boulders sometimes
-- Collect gems
+- Boulder falling on fred ends game
 
 TODO:
-- Boulder falling on fred ends game
+- Use get-block where appropriate / add get-blocksym?
 - Reset level with r
 - Aliens?
 - Bombs?
@@ -36,8 +31,9 @@ TODO:
 (define BLOCK-SIZE 50)
 (define TICK-RATE 0.1)
 
-(struct world (landscape fred level) #:transparent)
+(struct world (landscape fred level status) #:transparent)
 ;; A landscape is (make-vector (* WIDTH HEIGHT))
+;; Status is 'play 'end
 (struct pos (x y) #:transparent)
 (struct fred (pos) #:transparent)
 (struct block (what pos) #:transparent)
@@ -45,6 +41,7 @@ TODO:
 (define FRED-IMG (bitmap "images/smallface.gif"))
 (define MUD-IMG (bitmap "images/mud.gif"))
 (define BOULDER-IMG (bitmap "images/boulder.png"))
+(define FALLING-BOULDER-IMG (bitmap "images/falling-boulder.png"))
 (define WALL-IMG (bitmap "images/wall.gif"))
 (define GEM-IMG (bitmap "images/gem.gif"))
 
@@ -52,12 +49,19 @@ TODO:
   (cond
     [(eq? a-symbol 'mud) MUD-IMG]
     [(eq? a-symbol 'boulder) BOULDER-IMG]
+    [(eq? a-symbol 'falling-boulder) FALLING-BOULDER-IMG]
     [(eq? a-symbol 'wall) WALL-IMG]
     [(eq? a-symbol 'gem) GEM-IMG]
     [else (empty-scene BLOCK-SIZE BLOCK-SIZE "transparent")]))
 
 (define (vec-index a-pos)
   (+ (* (pos-y a-pos) WIDTH) (pos-x a-pos)))
+
+(define (get-blocksym a-landscape a-pos)
+  (vector-ref a-landscape (vec-index a-pos)))
+
+(define (get-block a-landscape a-pos)
+  (block (get-block a-landscape a-pos) a-pos))
 
 (define (set-block! a-landscape a-block)
   (vector-set! a-landscape (vec-index (block-pos a-block))
@@ -80,20 +84,32 @@ TODO:
 (define (what-is-below a-landscape a-pos)
   (what_is_next_to a-landscape a-pos 0 1))
 
-(define (can-fall a-landscape a-block)
-  (eq? (what-is-below a-landscape (block-pos a-block)) 0))
+(define (can-fall? a-landscape a-block)
+  (let ([this-block (block-what a-block)]
+        [block-below (what-is-below a-landscape (block-pos a-block))])
+    (if (eq? this-block 'falling-boulder)
+        (member block-below '(0 fred))
+        (eq? block-below 0))))
 
-(define (landscape-filter a-landscape what)
-  ;; Return a list of blocks that match 'what'
+(define (is-boulder? a-block)
+  (or (eq? (block-what a-block) 'boulder)
+      (eq? (block-what a-block) 'falling-boulder)))
+
+(define (landscape-filter a-landscape a-pred)
+  ;; Return a list of blocks that match predicate
   ;; A block is a (what pos)
   (for*/list ([y (range HEIGHT)]
               [x (range WIDTH)]
-              #:when (eq? (vector-ref a-landscape (vec-index (pos x y)))
-                          what))
-    (block what (pos x y))))
+              #:when (a-pred (block
+                              (vector-ref a-landscape (vec-index (pos x y)))
+                              (pos x y))))
+    (block (vector-ref a-landscape (vec-index (pos x y))) (pos x y))))
+
+(define (is-gem? a-block)
+  (eq? (block-what a-block) 'gem))
 
 (define (no-gems-left? a-landscape)
-  (empty? (landscape-filter a-landscape 'gem)))
+  (empty? (landscape-filter a-landscape is-gem?)))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -113,7 +129,7 @@ TODO:
        'wall]
       ;; Fred's pos
       [(and (= x 1) (= y 1))
-       0]
+       'fred]
       [else (random-block)])))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,19 +140,23 @@ TODO:
         (set-block! a-landscape (block 'fred new-pos)))
 
 (define (boulders-fall! a-landscape)
-  (define boulders (landscape-filter a-landscape 'boulder))
-  (for ([b (filter (curry can-fall a-landscape) boulders)])
-    (let* ([cur-pos (block-pos b)]
-          [new-pos (move-pos cur-pos 0 1)]
-          [new-boulder (block 'boulder new-pos)])
-      (clear-block! a-landscape cur-pos)
-      (set-block! a-landscape new-boulder)
-    )))
+  (define boulders (landscape-filter a-landscape is-boulder?))
+  (for ([b boulders])
+    (if (can-fall? a-landscape b)
+        (let* ([cur-pos (block-pos b)]
+               [new-pos (move-pos cur-pos 0 1)]
+               [new-boulder (block 'falling-boulder new-pos)])
+          (clear-block! a-landscape cur-pos)
+          (set-block! a-landscape new-boulder))
+        (set-block! a-landscape (block 'boulder (block-pos b))))
+    ))
 
-(define (next-world w)
+(define (next-world! w)
   (if (no-gems-left? (world-landscape w))
       ;; Next level
-      (world (make-landscape) (fred (pos 1 1)) (add1 (world-level w)))
+      (world (make-landscape) (fred (pos 1 1))
+             (add1 (world-level w))
+             'play)
       (begin
         (boulders-fall! (world-landscape w))
         w)))
@@ -168,7 +188,7 @@ TODO:
             (fred new-pos))
           a-fred))))
 
-(define (direct-fred w a-key)
+(define (direct-fred! w a-key)
   (define f (world-fred w))
   (define l (world-landscape w))
   (define newf
@@ -178,10 +198,13 @@ TODO:
       [(key=? a-key "up") (try-move-fred! l f 0 -1)]
       [(key=? a-key "down") (try-move-fred! l f 0 1)]
       [else f]))
-  (world (world-landscape w) newf (world-level w)))
+  (world (world-landscape w) newf (world-level w) (world-status w)))
 
 (define (fred-dead? w)
-  #f)
+  ;; Fred is dead if he's not at his location in the landscape
+  ;; e.g. there's a boulder there
+  (let ([fp (fred-pos (world-fred w))])
+    (not (eq? (get-blocksym (world-landscape w) fp) 'fred))))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Rendering
@@ -217,8 +240,8 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (go)
-  (big-bang (world (make-landscape) (fred (pos 1 1)) 1)
-            (on-tick next-world TICK-RATE)
-            (on-key direct-fred)
+  (big-bang (world (make-landscape) (fred (pos 1 1)) 1 'play)
+            (on-tick next-world! TICK-RATE)
+            (on-key direct-fred!)
             (to-draw render-world)
             (stop-when fred-dead?)))
