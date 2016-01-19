@@ -10,10 +10,16 @@ DONE:
 - Store 'fred in landscape so that falling boulders works
 - Pushing boulders
 - Fred blanks out falling boulders sometimes
+- Collect gems
 
 TODO:
-- Inconsistent use of block for struct and symbol
-- Collect gems
+- Boulder falling on fred ends game
+- Reset level with r
+- Aliens?
+- Bombs?
+- Make levels harder as you progress
+- Save and load levels -- or use text encoding
+- Still inconsistent use of block for struct and symbol
 |#
 
 (require 2htdp/universe)
@@ -28,7 +34,7 @@ TODO:
 (define WIDTH 16)
 (define HEIGHT 16)
 (define BLOCK-SIZE 50)
-(define TICK-RATE 0.25)
+(define TICK-RATE 0.1)
 
 (struct world (landscape fred level) #:transparent)
 ;; A landscape is (make-vector (* WIDTH HEIGHT))
@@ -42,12 +48,12 @@ TODO:
 (define WALL-IMG (bitmap "images/wall.gif"))
 (define GEM-IMG (bitmap "images/gem.gif"))
 
-(define (block->img a-block)
+(define (blocksym->img a-symbol)
   (cond
-    [(eq? a-block 'mud) MUD-IMG]
-    [(eq? a-block 'boulder) BOULDER-IMG]
-    [(eq? a-block 'wall) WALL-IMG]
-    [(eq? a-block 'gem) GEM-IMG]
+    [(eq? a-symbol 'mud) MUD-IMG]
+    [(eq? a-symbol 'boulder) BOULDER-IMG]
+    [(eq? a-symbol 'wall) WALL-IMG]
+    [(eq? a-symbol 'gem) GEM-IMG]
     [else (empty-scene BLOCK-SIZE BLOCK-SIZE "transparent")]))
 
 (define (vec-index a-pos)
@@ -68,6 +74,7 @@ TODO:
        (+ (pos-y a-pos) dy)))
 
 (define (what_is_next_to a-landscape a-pos dx dy)
+  ;; What is at a-pos + dx/dy?
   (vector-ref a-landscape (vec-index (move-pos a-pos dx dy))))
 
 (define (what-is-below a-landscape a-pos)
@@ -189,7 +196,7 @@ TODO:
              scene))
 
 (define (landscape-images a-landscape)
-  (map block->img (vector->list a-landscape)))
+  (map blocksym->img (vector->list a-landscape)))
 
 (define (landscape-posns)
   (for*/list ([y (range HEIGHT)]
