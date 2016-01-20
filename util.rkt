@@ -10,7 +10,9 @@
   (+ a (random (+ 1 (- b a)))))
 
 (define (random-choice list)
-  (list-ref list (random (length list))))
+  (if (empty? list)
+      #f
+      (list-ref list (random (length list)))))
 
 (define (random-sign exp)
   ;; Randomly return +exp or -exp
