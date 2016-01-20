@@ -33,9 +33,8 @@ TODO:
 (define BLOCK-SIZE 50)
 (define TICK-RATE 0.1)
 
-(struct world (landscape fred level status) #:transparent)
+(struct world (landscape fred level) #:transparent)
 ;; A landscape is (make-vector (* WIDTH HEIGHT))
-;; Status is 'play 'end
 (struct pos (x y) #:transparent)
 (struct fred (pos) #:transparent)
 (struct block (what pos) #:transparent)
@@ -47,6 +46,7 @@ TODO:
 (define FALLING-BOULDER-IMG (bitmap "images/falling-boulder.png"))
 (define WALL-IMG (bitmap "images/wall.gif"))
 (define GEM-IMG (bitmap "images/gem.gif"))
+(define DRAGON-IMG (bitmap "images/dragon.png"))
 
 (define (blocksym->img a-symbol)
   (cond
@@ -55,6 +55,7 @@ TODO:
     [(eq? a-symbol 'falling-boulder) FALLING-BOULDER-IMG]
     [(eq? a-symbol 'wall) WALL-IMG]
     [(eq? a-symbol 'gem) GEM-IMG]
+    [(eq? a-symbol 'dragon) DRAGON-IMG]
     [else (empty-scene BLOCK-SIZE BLOCK-SIZE "transparent")]))
 
 (define (vec-index a-pos)
@@ -80,12 +81,18 @@ TODO:
   (pos (+ (pos-x a-pos) dx)
        (+ (pos-y a-pos) dy)))
 
-(define (what_is_next_to a-landscape a-pos dx dy)
-  ;; What is at a-pos + dx/dy?
+(define (what-is-next-to a-landscape a-pos dx dy)
+  ;; What is at a-pos + dx/dy? Return symbol
   (get-blocksym a-landscape (move-pos a-pos dx dy)))
 
 (define (what-is-below a-landscape a-pos)
-  (what_is_next_to a-landscape a-pos 0 1))
+  (what-is-next-to a-landscape a-pos 0 1))  
+
+(define (block-next-to a-landscape a-pos dx dy)
+  ;; Like what-is-next-to but return block
+  (let ([d-pos (move-pos a-pos dx dy)])
+    (block (get-blocksym a-landscape d-pos)
+           d-pos)))
 
 (define (can-fall? a-landscape a-block)
   (let ([this-block (block-what a-block)]
@@ -98,6 +105,10 @@ TODO:
   (or (eq? (block-what a-block) 'boulder)
       (eq? (block-what a-block) 'falling-boulder)))
 
+(define (is-gem? a-block) (eq? (block-what a-block) 'gem))
+(define (is-dragon? a-block) (eq? (block-what a-block) 'dragon))
+(define (is-empty? a-block) (eq? (block-what a-block) 0))
+
 (define (landscape-filter a-landscape a-pred)
   ;; Return a list of blocks that match predicate
   ;; A block is a (what pos)
@@ -106,23 +117,37 @@ TODO:
               #:when (a-pred (block
                               (vector-ref a-landscape (vec-index (pos x y)))
                               (pos x y))))
-    (block (vector-ref a-landscape (vec-index (pos x y))) (pos x y))))
+    (block (vector-ref a-landscape (vec-index (pos x y)))
+           (pos x y))))
 
-(define (is-gem? a-block)
-  (eq? (block-what a-block) 'gem))
 
 (define (no-gems-left? a-landscape)
   (empty? (landscape-filter a-landscape is-gem?)))
 
+(define (blanks-next-to a-landscape a-pos)
+  ;; Return blanks poses next to this pos (N, E, S, W)
+  (define bn block-next-to)
+  (define blank-blocks
+    (filter is-empty? (list 
+           (bn a-landscape a-pos -1 0)
+           (bn a-landscape a-pos 1 0)
+           (bn a-landscape a-pos 0 -1)
+           (bn a-landscape a-pos 0 1))
+            ))
+  (map block-pos blank-blocks))
+
+
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-(define (random-block)
-  ;; mud is more likely
-  (random-choice '(mud mud mud mud mud mud mud
-                       boulder boulder
-                       wall gem)))
+(define (random-block level)
+  ;; mud is more likely in lower levels
+  (random-choice
+   (append
+    (times-repeat (+ 5 (- 10 (* 2 level))) 'mud)
+    '(boulder boulder wall gem)
+    (times-repeat level 'dragon))))
 
-(define (make-landscape)
+(define (make-landscape level)
   (for*/vector ([y (range HEIGHT)]
                 [x (range WIDTH)])
     (cond
@@ -133,7 +158,7 @@ TODO:
       ;; Fred's pos
       [(and (= x 1) (= y 1))
        'fred]
-      [else (random-block)])))
+      [else (random-block level)])))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Events & movement
@@ -154,24 +179,35 @@ TODO:
         (set-block! a-landscape (block 'boulder (block-pos b))))
     ))
 
+(define (dragons-move! a-landscape)
+  (define dragons (landscape-filter a-landscape is-dragon?))
+  (for ([d dragons])
+    (let* ([can-move (blanks-next-to a-landscape (block-pos d))]
+           [new-pos (random-choice can-move)])
+      (if new-pos
+          (begin
+            (clear-block! a-landscape (block-pos d))
+            (set-block! a-landscape (block 'dragon new-pos)))
+          #f))))
+  
+
 (define (next-world! w)
   (if (no-gems-left? (world-landscape w))
-      ;; Next level
-      (world (make-landscape) (fred (pos 1 1))
-             (add1 (world-level w))
-             'play)
+      (let ([next-level (add1 (world-level w))])
+        (world (make-landscape next-level) (fred (pos 1 1)) next-level))
       (begin
         (boulders-fall! (world-landscape w))
+        (dragons-move! (world-landscape w))
         w)))
 
 (define (fred-can-move a-landscape a-fred dx dy)
-  (member (what_is_next_to a-landscape (fred-pos a-fred) dx dy)
+  (member (what-is-next-to a-landscape (fred-pos a-fred) dx dy)
           '(0 mud gem)))
 
 (define (fred-can-push-boulder a-landscape a-fred dx dy)
   (and (zero? dy)
-       (eq? (what_is_next_to a-landscape (fred-pos a-fred) dx 0) 'boulder)
-       (eq? (what_is_next_to a-landscape (fred-pos a-fred) (* dx 2) 0) 0)))
+       (eq? (what-is-next-to a-landscape (fred-pos a-fred) dx 0) 'boulder)
+       (eq? (what-is-next-to a-landscape (fred-pos a-fred) (* dx 2) 0) 0)))
 
 (define (try-move-fred! a-landscape a-fred dx dy)
   ;; Fred can move if there's mud, gem or empty space.
@@ -202,8 +238,8 @@ TODO:
       [(key=? a-key "down") (try-move-fred! l f 0 1)]
       [else f]))
   (if (key=? a-key "r")
-      (world (make-landscape) (fred (pos 1 1)) (world-level w) 'play)
-      (world (world-landscape w) newf (world-level w) (world-status w))))
+      (world (make-landscape (world-level w)) (fred (pos 1 1)) (world-level w))
+      (world (world-landscape w) newf (world-level w))))
 
 (define (fred-dead? w)
   ;; Fred is dead if he's not at his location in the landscape
@@ -249,7 +285,7 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (go)
-  (big-bang (world (make-landscape) (fred (pos 1 1)) 1 'play)
+  (big-bang (world (make-landscape 1) (fred (pos 1 1)) 1)
             (on-tick next-world! TICK-RATE)
             (on-key direct-fred!)
             (to-draw render-world)
