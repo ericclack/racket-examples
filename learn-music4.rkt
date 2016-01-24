@@ -11,9 +11,9 @@ corrections, wait for the player to remember first?
 DONE:
 - Blue colouring for easy notes only considers default set
 - Play easy-notes less often
+- Show the note played, on the last play
 
 TODO:
-- Show the note played, on the last play
 - Fix display of extenders that should be hidden by
   stave lines
 - Sort easy-notes for better display, or show them on
@@ -54,7 +54,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE .5)
+(define TICK-RATE .75)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
@@ -187,14 +187,21 @@ TODO:
                (cons note easy-notes)))))
 
 (define (render-scene w)
-  (place-image/align
-   (above/align "left"
-    (text (string-append "Easy notes: "
-                         (string-join (map symbol->string (world-easy-notes w)) ", "))
-          15 "black")
-    (text "Press any key to add current note" 15 "black"))
-   5 5 "left" "top"
-   (show-note (world-note w))))
+  (define scene
+    (place-image/align
+     (above/align "left"
+                  (text (string-append "Easy notes: "
+                                       (string-join (map symbol->string (world-easy-notes w)) ", "))
+                        15 "black")
+                  (text "Press any key to add current note" 15 "black"))
+     5 5 "left" "top"
+     (show-note (world-note w))))
+  (if (= 0 (world-plays w))
+      (place-image/align
+       (text (symbol->string (world-note w)) 50 "black")
+       (- WIDTH 8) HEIGHT "right" "bottom" 
+       scene)
+      scene))
 
 (define (go)
   (big-bang (world (random-choice NOTES) 0 EASY-NOTES)
