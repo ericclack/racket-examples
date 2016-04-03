@@ -9,6 +9,7 @@ DONE:
 - Introduce some randomness
 
 TODO:
+- Randomise colour a bit
 - Make tree a bit more symmetrical
 - Get rid of constants and make a tree-maker function
   to create trees of a family
@@ -34,7 +35,7 @@ TODO:
 ;; How likely we have different branch lengths?
 (define RAND-SIZE 0.2)
 ;; And how much bigger / smaller?
-(define RAND-SIZE-SCALE 0.2)
+(define RAND-SIZE-SCALE 0.3)
 ;; How likely we have different angles?
 (define RAND-ANGLE 0.4)
 ;; And how much bigger / smaller?
@@ -44,7 +45,7 @@ TODO:
   ;; increase or decrease n by up to scale randomly
   ;; depending on likely (0 = never, 1 = always)
   (if (< (random) likely)
-      (let ([range (inexact->exact (abs (floor (+ 1 (* 2 scale)))))])
+      (let ([range (exact-round (abs (+ 1 (* 2 scale))))])
         (+ n (- scale (random range))))
       n))
 
@@ -83,6 +84,4 @@ TODO:
      size angle
    )))
 
-;; (tree (empty-scene 0 0 "black") 0 0 50 90)
-;; (tree (empty-scene 200 200 "blue") 100 190 50 270)
-;; (tree 50 90)
+(tree 80 270)

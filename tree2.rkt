@@ -39,4 +39,3 @@ TODO:
 
 ;; (tree (empty-scene 0 0 "black") 0 0 50 90)
 ;; (tree (empty-scene 200 200 "blue") 100 190 50 270)
-;; (tree 50 90)
