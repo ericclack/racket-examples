@@ -29,17 +29,18 @@ TODO:
     (point (+ (point-x p) (* (cos a) length))
            (+ (point-y p) (* (sin a) length)))))
 
-(define (random-adjust mean factor)
-  (let ([stddev (* mean factor)])
-    (random-gaussian mean stddev)))
+(define (random-adjust mean stddev factor)
+  ;; Scale stddev by factor (0,1) before returning a random number
+  (let ([stddev2 (* stddev factor)])
+    (random-gaussian mean stddev2)))
 
 (define (tree p length num-branches angle angle-between-branches randomness)
   ;; Return a list of branches representing a tree starting at point p
   ;; angle is the direction of the trunk 
   ;; randomness is 0 to 1, with 1 creating variation with stddev = mean
-  (let ([end-point (translate-point p
-                                    (random-adjust length randomness)
-                                    (random-adjust angle randomness))])
+  (let* ([random-length (random-adjust length length randomness)]
+         [random-angle (random-adjust angle angle-between-branches randomness)]
+         [end-point (translate-point p random-length random-angle)])
     (list
      (branch p end-point)
      (if (> length 10)
@@ -76,5 +77,5 @@ TODO:
      (empty-scene width height BG-COLOUR)
    )))
 
-(draw-tree 100 3 45 0.02)
-(draw-tree 100 4 25 0.02)
+(draw-tree 100 3 60 0.2)
+(draw-tree 75 4 20 0.3)
