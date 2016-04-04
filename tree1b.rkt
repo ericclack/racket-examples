@@ -18,10 +18,6 @@ TODO:
 (require "util.rkt")
 
 (define BRANCH-COLOUR "green")
-(define NUM-BRANCHES 4)
-(define MIN-SIZE 10)
-(define DS 0.7)
-(define DA 30)
 (define BG-COLOUR "black")
 
 (struct point (x y) #:transparent)

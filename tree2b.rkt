@@ -4,20 +4,21 @@
 Draw a fractal tree
 
 DONE:
-- Refactored recursion
+- Split out generating tree (branches) from drawing it
 
 TODO:
-- Separate out generating branches from drawing tree
-- Get rid of constants and make a tree-maker function
-  to create trees of a family
+- Vary branch width according to length
+- Draw sub-branches along branch rather than at end?
 |#
 
 
 (require 2htdp/image)
 (require racket/trace)
+(require (planet williams/science/random-distributions/gaussian))
+
 (require "util.rkt")
 
-(define BRANCH-COLOUR "green")
+(define BRANCH-COLOUR "white")
 (define BG-COLOUR "black")
 
 (struct point (x y) #:transparent)
@@ -28,16 +29,24 @@ TODO:
     (point (+ (point-x p) (* (cos a) length))
            (+ (point-y p) (* (sin a) length)))))
 
-(define (tree p length num-branches angle angle-delta)
-  ;; Return a list of branches representing a tree
-  (let ([end-point (translate-point p length angle)])
+(define (random-adjust mean factor)
+  (let ([stddev (* mean factor)])
+    (random-gaussian mean stddev)))
+
+(define (tree p length num-branches angle angle-between-branches randomness)
+  ;; Return a list of branches representing a tree starting at point p
+  ;; angle is the direction of the trunk 
+  ;; randomness is 0 to 1, with 1 creating variation with stddev = mean
+  (let ([end-point (translate-point p
+                                    (random-adjust length randomness)
+                                    (random-adjust angle randomness))])
     (list
      (branch p end-point)
      (if (> length 10)
          (for/list ([b (range num-branches)])
            (tree end-point (* length 0.6) num-branches
-                 (+ angle (* (- (/ num-branches 2) b) angle-delta))
-                 angle-delta))
+                 (+ angle (* (- (/ num-branches 2) b) angle-between-branches))
+                 angle-between-branches randomness))
          '()
          ))))
 
@@ -51,19 +60,21 @@ TODO:
          scene
          (flatten t)))
 
-(define (draw-tree size)
+(define (draw-tree size num-branches angle-between-branches randomness)
   ;; Guess at width and height
-  (let* ([width (* size 5)]
-         [height (* size 5)])
+  (let* ([width (* size 3)]
+         [height (* size 3)])
     (scene+tree
      (tree
       (point (/ width 2) (- height 10))
       size
-      4 ;; branches
+      num-branches
       270 ;; up
-      35 ;; angle between branches
+      angle-between-branches
+      randomness
       )
      (empty-scene width height BG-COLOUR)
    )))
 
-(draw-tree 100)
+(draw-tree 100 3 45 0.02)
+(draw-tree 100 4 25 0.02)
