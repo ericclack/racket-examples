@@ -38,6 +38,9 @@ TODO:
 ;; And how much bigger / smaller?
 (define RAND-ANGLE-SCALE 0.1)
 
+(struct point (x y) #:transparent)
+(struct branch (start end) #:transparent)
+
 (define (randomise n scale likely)
   ;; increase or decrease n by up to scale randomly
   ;; depending on likely (0 = never, 1 = always)
@@ -46,36 +49,46 @@ TODO:
         (+ n (- scale (random range))))
       n))
 
-(define (translate-point x y length angle)
+(define (translate-point p length angle)
   (let ([a (degrees->radians angle)])
-    (list (+ x (* (cos a) length))
-          (+ y (* (sin a) length)))))
+    (point (+ (point-x p) (* (cos a) length))
+           (+ (point-y p) (* (sin a) length)))))
 
-(define (branch-lines x y length n angle angle-delta)
-  ;; Return a list of n lines representing branches radiating from x, y
-  ;; spread out by angle-delta degrees
-  (for/list ([b (range n)])
-    (list* x y (translate-point x y length (+ angle (* b angle-delta))))
-    ))
+(define (tree p length n angle angle-delta)
+  ;; Return a list of lines representing a tree
+  (let ([end-point (translate-point p length angle)])
+    (list
+     (branch p end-point)
+     (if (> length 10)
+         (for/list ([b (range n)])
+           (tree end-point (* length 0.6) n
+                 (+ angle (* b angle-delta))
+                 angle-delta))
+         '()
+         ))))
 
-(define (scene+branch branch scene)
-  (scene+line scene (first branch) (second branch)
-              (third branch) (fourth branch)
+(define (scene+branch b scene)
+  (scene+line scene (point-x (branch-start b)) (point-y (branch-start b))
+              (point-x (branch-end b)) (point-y (branch-end b))
               BRANCH-COLOUR))
 
-(define (scene+tree x y size angle scene)
+(define (scene+tree t scene)
   (foldl scene+branch
          scene
-         (branch-lines x y size NUM-BRANCHES angle DA)))
+         (flatten t)))
 
-(define (tree size angle)
+(define (draw-tree size)
   ;; Guess at width and height
   (let* ([width (* size 5)]
          [height (* size 5)])
     (scene+tree
-     (/ width 2) (- height 10)
-     size angle
+     (tree
+      (point (/ width 2) (- height 10))
+      size
+      3
+      270
+      30)
      (empty-scene width height BG-COLOUR)
    )))
 
-(tree 80 240)
+;;(draw-tree 80 240)
