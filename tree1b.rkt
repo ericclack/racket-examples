@@ -24,45 +24,23 @@ TODO:
 (define DA 30)
 (define BG-COLOUR "black")
 
-
-;; How likely we have a different num of branches?
-(define RAND-BRANCHES 0.5)
-;; And how many more / less?
-(define RAND-BRANCHES-SCALE 1)
-;; How likely we have different branch lengths?
-(define RAND-SIZE 0.2)
-;; And how much bigger / smaller?
-(define RAND-SIZE-SCALE 0.3)
-;; How likely we have different angles?
-(define RAND-ANGLE 0.4)
-;; And how much bigger / smaller?
-(define RAND-ANGLE-SCALE 0.1)
-
 (struct point (x y) #:transparent)
 (struct branch (start end) #:transparent)
-
-(define (randomise n scale likely)
-  ;; increase or decrease n by up to scale randomly
-  ;; depending on likely (0 = never, 1 = always)
-  (if (< (random) likely)
-      (let ([range (exact-round (abs (+ 1 (* 2 scale))))])
-        (+ n (- scale (random range))))
-      n))
 
 (define (translate-point p length angle)
   (let ([a (degrees->radians angle)])
     (point (+ (point-x p) (* (cos a) length))
            (+ (point-y p) (* (sin a) length)))))
 
-(define (tree p length n angle angle-delta)
-  ;; Return a list of lines representing a tree
+(define (tree p length num-branches angle angle-delta)
+  ;; Return a list of branches representing a tree
   (let ([end-point (translate-point p length angle)])
     (list
      (branch p end-point)
      (if (> length 10)
-         (for/list ([b (range n)])
-           (tree end-point (* length 0.6) n
-                 (+ angle (* b angle-delta))
+         (for/list ([b (range num-branches)])
+           (tree end-point (* length 0.6) num-branches
+                 (+ angle (* (- (/ num-branches 2) b) angle-delta))
                  angle-delta))
          '()
          ))))
@@ -85,10 +63,11 @@ TODO:
      (tree
       (point (/ width 2) (- height 10))
       size
-      3
-      270
-      30)
+      4 ;; branches
+      270 ;; up
+      35 ;; angle between branches
+      )
      (empty-scene width height BG-COLOUR)
    )))
 
-;;(draw-tree 80 240)
+(draw-tree 100)
