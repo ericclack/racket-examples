@@ -54,10 +54,9 @@ TODO:
 (define (branch-lines x y length n angle angle-delta)
   ;; Return a list of n lines representing branches radiating from x, y
   ;; spread out by angle-delta degrees
-  (cond [(zero? n) '()]
-        [else
-         (cons (list* x y (translate-point x y length angle))
-               (branch-lines x y length (sub1 n) (+ angle angle-delta) angle-delta))]))
+  (for/list ([b (range n)])
+    (list* x y (translate-point x y length (+ angle (* b angle-delta))))
+    ))
 
 (define (scene+branch branch scene)
   (scene+line scene (first branch) (second branch)
