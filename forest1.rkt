@@ -14,9 +14,9 @@
 (require unstable/debug)
 
 ;; - to + of this value for new stars
-(define MAX-STAR-XY 25000)
+(define MAX-TREE-XY 25000)
 
-(define MAX-STARS 100)
+(define MAX-TREES 100)
 (define MAX-ALIENS 10)
 (define ALIEN-SIZE 150)
 
@@ -29,50 +29,50 @@
 
 (define score 0)
 
-(define (random-star-xy) (- (random MAX-STAR-XY) (/ MAX-STAR-XY 2)))
+(define (random-star-xy) (- (random MAX-TREE-XY) (/ MAX-TREE-XY 2)))
 (define (random-angle) (* (random) 2 pi))
 
 ;; -----------------------------------------------------------
 ;; The world and init
 
-(struct starfield (stars aliens) #:transparent)
-(struct astar (pos) #:transparent)
+(struct forest (stars aliens) #:transparent)
+(struct atree (pos) #:transparent)
 (struct alien (pos direction dirchange speed colour) #:transparent)
 
   
-(define (start-space)
+(define (start-forest)
   (big-bang (init-world)
             (on-tick fly TICK-RATE)
             (on-mouse mouse-event)
             (on-key key-event)
             (to-draw render-space)
-            (stop-when end-flight)))
+            (stop-when end-game)))
 
 (define (init-world)
-  (starfield (times-repeat MAX-STARS (new-star))
+  (forest (times-repeat MAX-TREES (new-tree))
              (times-repeat MAX-ALIENS (new-alien))))
 
 ;; -----------------------------------------------------------
 ;; Stars and Aliens
 
-(define (new-star)
-  (astar (point (random-star-xy)
+(define (new-tree)
+  (atree (point (random-star-xy)
               0
               (+ (random START-Z) 10))))
 
-(define (move-star s)
-  (define p (astar-pos s))
-  (astar (point (point-x p) (point-y p) (- (point-z p) speed))))
+(define (move-tree s)
+  (define p (atree-pos s))
+  (atree (point (point-x p) (point-y p) (- (point-z p) speed))))
 
-(define (stars-in-view stars)
-  (define (replace-star s)
-    (if (star-out-of-view? s) (new-star) s))
-  (map replace-star stars))
+(define (trees-in-view stars)
+  (define (replace-tree s)
+    (if (tree-out-of-view? s) (new-tree) s))
+  (map replace-tree stars))
 
-(define (star-out-of-view? s)
+(define (tree-out-of-view? s)
   (or 
-   (<= (point-z (astar-pos s)) 1)
-   (> (point-z (astar-pos s)) 200)))
+   (<= (point-z (atree-pos s)) 1)
+   (> (point-z (atree-pos s)) 200)))
 
 ;; ...........................................................
 
@@ -116,8 +116,8 @@
       (> (point-z (alien-pos s)) 100)))
 
 (define (fly w)
-  (starfield (map move-star (stars-in-view (starfield-stars w)))
-             (map move-alien (aliens-in-view (starfield-aliens w)))))
+  (forest (map move-tree (trees-in-view (forest-stars w)))
+             (map move-alien (aliens-in-view (forest-aliens w)))))
 
 ;; -----------------------------------------------------------
 ;; Input events
@@ -138,8 +138,8 @@
         a))
   
   (cond [(eq? event "button-down")
-         (starfield (starfield-stars w)
-                    (map kill-alien (starfield-aliens w)))]
+         (forest (forest-stars w)
+                    (map kill-alien (forest-aliens w)))]
         [else w]))
 
 (define (key-event w akey)
@@ -153,9 +153,8 @@
 
 (define (render-space w)
   (score+scene 
-   (aliens+scene (starfield-aliens w) 
-                 (stars+scene (starfield-stars w)
-                              (empty-scene WIDTH HEIGHT "black")))))
+   (trees+scene (forest-stars w)
+                (empty-scene WIDTH HEIGHT "black"))))
 
 (define (score+scene scene)
   (place-image
@@ -164,52 +163,36 @@
    scene))
 
 (define (tree t)
-  (above (circle (star-size t) "solid" (star-colour t))
-         (rectangle (/ (star-size t) 5) (star-size t) "solid" (star-colour t)))
+  (above (circle (tree-size t) "solid" (tree-colour t))
+         (rectangle (/ (tree-size t) 5) (tree-size t) "solid" (tree-colour t)))
   )
 
-(define (stars+scene stars scene)
+(define (trees+scene trees scene)
   ;; Place the stars on the scene
   (foldl (λ (s scene)
            (place-image (tree s)
-                        (screen-x (astar-pos s))
-                        (screen-y (astar-pos s))
+                        (screen-x (atree-pos s))
+                        (screen-y (atree-pos s))
                         scene))
-         scene stars))
+         scene trees))
 
-(define (star-size s)
-  (define z (round (point-z (astar-pos s))))
+(define (tree-size s)
+  (define z (round (point-z (atree-pos s))))
   (cond [(> z 75) 1]
-        [else (+ 1 (/ (- 75 z) 20)) ]))
+        [else (+ 1 (/ (- 75 z) 5)) ]))
 
-(define (star-colour s)
-  (define z (round (point-z (astar-pos s))))
+(define (tree-colour s)
+  (define z (round (point-z (atree-pos s))))
   (cond [(> z 90) (color 255 255 255 20)]
         [else
          (define alph (min (+ 20 (* 2 (- 90 z)))
                            255))
          (color 255 255 255 alph)]))
 
-(define (aliens+scene aliens scene)
-  ;; Place the aliens on the scene
-  (foldl (λ (a scene)
-           (place-image (alien-image a)
-                        (screen-x (alien-pos a))
-                        (screen-y (alien-pos a))
-                        scene))
-         scene
-         ;; Do the closest aliens last
-         (sort aliens > #:key (λ (a) (point-z (alien-pos a))))))
-
-(define (alien-image a)
-  (radial-star 12 (screen-size ALIEN-SIZE (alien-pos a))
-               (screen-size (* ALIEN-SIZE 0.5) (alien-pos a))
-               "solid" (alien-colour a)))
-
 ;; -----------------------------------------------------------
 
-(define (end-flight w)
+(define (end-game w)
   ;; No end!
   #f)
 
-(start-space)
+(start-forest)
