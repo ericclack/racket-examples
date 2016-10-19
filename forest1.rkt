@@ -4,8 +4,13 @@
 
 ;; Version 1
 
-;; To Do
-;; Adapt from stars.rkt
+;; To Do:
+;; - Adapt from stars.rkt
+;; - How big does something look at position x,y,z? Not just about z
+;; - Why do trees get smaller as they get closer?
+;; - move-tree should be move-player
+;; - We currently have space physics -- up/down shouldn't keep us running
+;; - Turn left/right
 
 (require 2htdp/universe 2htdp/image)
 (require "util.rkt")
@@ -16,7 +21,7 @@
 ;; - to + of this value for new stars
 (define MAX-TREE-XY 25000)
 
-(define MAX-TREES 100)
+(define MAX-TREES 25)
 (define MAX-ALIENS 10)
 (define ALIEN-SIZE 150)
 
@@ -42,7 +47,7 @@
   
 (define (start-forest)
   (big-bang (init-world)
-            (on-tick fly TICK-RATE)
+            (on-tick run TICK-RATE)
             (on-mouse mouse-event)
             (on-key key-event)
             (to-draw render-space)
@@ -115,7 +120,7 @@
   (or (<= (point-z (alien-pos s)) 1)
       (> (point-z (alien-pos s)) 100)))
 
-(define (fly w)
+(define (run w)
   (forest (map move-tree (trees-in-view (forest-stars w)))
              (map move-alien (aliens-in-view (forest-aliens w)))))
 
@@ -162,7 +167,7 @@
    60 20 
    scene))
 
-(define (tree t)
+(define (tree-img t)
   (above (circle (tree-size t) "solid" (tree-colour t))
          (rectangle (/ (tree-size t) 5) (tree-size t) "solid" (tree-colour t)))
   )
@@ -170,7 +175,7 @@
 (define (trees+scene trees scene)
   ;; Place the stars on the scene
   (foldl (λ (s scene)
-           (place-image (tree s)
+           (place-image (tree-img s)
                         (screen-x (atree-pos s))
                         (screen-y (atree-pos s))
                         scene))
@@ -179,7 +184,7 @@
 (define (tree-size s)
   (define z (round (point-z (atree-pos s))))
   (cond [(> z 75) 1]
-        [else (+ 1 (/ (- 75 z) 5)) ]))
+        [else (+ 1 (/ (- 75 z) 1)) ]))
 
 (define (tree-colour s)
   (define z (round (point-z (atree-pos s))))
