@@ -16,6 +16,7 @@ DONE:
 
 TODO:
 - It's too hard to begin with
+- Ship should carry on straight path even when turning
 - Level up
 - Can leave bullets just sitting there (reverse and fire)
 - Lives
@@ -29,17 +30,18 @@ TODO:
 (require unstable/debug)
 (require racket/trace)
 
-(struct world (asteroids ship bullets score) #:transparent)
+(struct world (asteroids ship bullets score level) #:transparent)
 (struct pos (x y) #:transparent)
-(struct ship (pos direction speed) #:transparent)
+(struct ship (pos facing-direction speed travel-direction) #:transparent)
 (struct asteroid (pos direction speed size) #:transparent)
 (struct bullet (pos direction speed) #:transparent)
 
 (define BIG-ASTEROID 50)
-(define NUM-ASTEROIDS 4)
+(define NUM-ASTEROIDS 1)
 (define BULLET-SPEED 5)
 (define SHIP-SIZE 30)
 (define MAX-BULLETS 25)
+(define ASTEROID-IMG (bitmap "images/space-pizza.png"))
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -58,6 +60,22 @@ TODO:
   (pos (+ (pos-x a-pos) (* a-speed (cos r)))
        (+ (pos-y a-pos) (* a-speed (sin r)))))
 
+(define (add-direction-speeds d1 s1 d2 s2)
+  ;; Given two direction & speed pairs, calculate the
+  ;; combined effect and return new direction and speed
+  (if (and (zero? s1) (zero? s2))
+      (list d1 0)
+      (let* ([vec1 (move-pos (pos 0 0) d1 s1)]
+             [vec2 (move-pos (pos 0 0) d2 s2)]
+             [c-vec (pos (+ (pos-x vec1) (pos-x vec2))
+                         (+ (pos-y vec1) (pos-y vec2)))]
+             [direction (radians->degrees
+                         (atan (pos-y c-vec)
+                               (pos-x c-vec)))]
+             [speed (sqrt (+ (sqr (pos-x c-vec))
+                             (sqr (pos-y c-vec))))])
+        (list direction speed))))
+  
 (define (wrap-pos a-pos a-size)
   (define x (pos-x a-pos))
   (define y (pos-y a-pos))
@@ -91,7 +109,7 @@ TODO:
 
 (define (new-bullet a-ship)
   (bullet (ship-pos a-ship)
-          (ship-direction a-ship)
+          (ship-facing-direction a-ship)
           (+ (ship-speed a-ship) BULLET-SPEED)))
 
 (define (move-bullet b)
@@ -159,10 +177,11 @@ TODO:
 
 (define (move-ship a-ship)
   (ship (wrap-pos
-         (move-pos (ship-pos a-ship) (ship-direction a-ship) (ship-speed a-ship))
+         (move-pos (ship-pos a-ship) (ship-travel-direction a-ship) (ship-speed a-ship))
          SHIP-SIZE)
-        (ship-direction a-ship)
-        (ship-speed a-ship)))
+        (ship-facing-direction a-ship)
+        (ship-speed a-ship)
+        (ship-travel-direction a-ship)))
   
 (define (next-world w)
   (move-world (direct-ship w)))
@@ -175,7 +194,8 @@ TODO:
   (world (map move-asteroid next-asteroids)
          (move-ship (world-ship w))
          (filter bullet-in-range (map move-bullet next-bullets))
-         (+ add-score (world-score w))))
+         (+ add-score (world-score w))
+         (world-level w)))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Rendering
@@ -190,13 +210,14 @@ TODO:
 
 (define (ship+scene a-ship scene)
   (img+scene (ship-pos a-ship)
-             (ship-img (ship-direction a-ship))
+             (ship-img (ship-facing-direction a-ship))
              scene))
 
 (define (asteroids+scene asteroids scene)
   (foldl (λ (a scene)
            (img+scene (asteroid-pos a)
-                      (circle (asteroid-size a) "solid" "gray")
+                      (scale (/ (asteroid-size a) 11)
+                             ASTEROID-IMG)
                       scene))
          scene asteroids))
 
@@ -207,13 +228,18 @@ TODO:
                       scene))
          scene bullets))
 
-(define (score+scene score scene)
-  (place-image (text (string-append "Score: "
-                                    (number->string score))
-                     24 "white") 55 20 scene))
+(define (score+scene score level scene)
+  (place-image
+   (above/align "left"
+    (text (string-append "Score: " (number->string score))
+          24 "white")
+    (text (string-append "Level: " (number->string level))
+          24 "white"))
+   55 35
+   scene))
 
 (define (render-world w)
-  (score+scene (world-score w)
+  (score+scene (world-score w) (world-level w)
                (ship+scene (world-ship w)
                            (asteroids+scene (world-asteroids w)
                                             (bullets+scene (world-bullets w)
@@ -233,30 +259,34 @@ TODO:
   (hash-ref KEY-STATE a-key #f))
 
 (define (direct-ship w)
-  (define a-ship (world-ship w))
-  (define a-direction
-    (+ (ship-direction a-ship)
-    (cond
-      [(key-pressed? "left") -5]
-      [(key-pressed? "right") 5]
-      [else 0])))
-  (define a-speed
-    (+ (ship-speed a-ship)
-       (cond
-         [(key-pressed? "up") 1]
-         [(key-pressed? "down") -1]
-         [else 0])))
-  (define bullets
-    (cond
-      [(and (key-pressed? " ")
-            (< (length (world-bullets w)) MAX-BULLETS)) 
-       (cons (new-bullet a-ship) (world-bullets w))]
-      [else (world-bullets w)]))
+  (let* ([a-ship (world-ship w)]
+         [new-facing-direction (+ (ship-facing-direction a-ship)
+                                  (cond
+                                    [(key-pressed? "left") -5]
+                                    [(key-pressed? "right") 5]
+                                    [else 0]))]
 
-  (world (world-asteroids w)
-         (ship (ship-pos a-ship) a-direction a-speed)
-         bullets
-         (world-score w)))
+         [new-direction-speed (add-direction-speeds
+                               (ship-travel-direction a-ship)
+                               (ship-speed a-ship)
+                               new-facing-direction
+                               (cond
+                                 [(key-pressed? "up") 1]
+                                 [(key-pressed? "down") -1]
+                                 [else 0]))]
+         [bullets
+          (cond
+            [(and (key-pressed? " ")
+                  (< (length (world-bullets w)) MAX-BULLETS)) 
+             (cons (new-bullet a-ship) (world-bullets w))]
+            [else (world-bullets w)])])
+    (world (world-asteroids w)
+           (ship (ship-pos a-ship) new-facing-direction
+                 (second new-direction-speed)
+                 (first new-direction-speed))
+           bullets
+           (world-score w)
+           (world-level w))))
 
 (define (ship-crashed? w)
   (define a-ship (world-ship w))
@@ -274,9 +304,9 @@ TODO:
 (define (new-world)
   ;; Produce a world in which the ship has not just crashed
   (define asteroids (times-repeat NUM-ASTEROIDS (new-asteroid)))
-  (define a-ship (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0))
+  (define a-ship (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0 0))
   (define a-world
-    (world asteroids a-ship '() 0))
+    (world asteroids a-ship '() 0 1))
   (if (ship-crashed? a-world)
       (new-world)
       a-world))
