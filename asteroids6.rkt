@@ -37,11 +37,12 @@ TODO:
 (struct bullet (pos direction speed) #:transparent)
 
 (define BIG-ASTEROID 50)
-(define NUM-ASTEROIDS 1)
+(define NUM-ASTEROIDS 3)
 (define BULLET-SPEED 5)
 (define SHIP-SIZE 30)
 (define MAX-BULLETS 25)
 (define ASTEROID-IMG (bitmap "images/space-pizza.png"))
+(define SPACESHIP-IMG (bitmap "images/spaceship.png"))
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -204,9 +205,8 @@ TODO:
   (place-image img (pos-x pos) (pos-y pos) scene))
 
 (define (ship-img a-direction)
-  (rotate (- 270 a-direction)
-          (overlay/offset (triangle SHIP-SIZE "solid" "white") 0 8
-                          (triangle SHIP-SIZE "solid" "white"))))
+  (rotate (- 0 a-direction)
+          (scale 3 SPACESHIP-IMG)))
 
 (define (ship+scene a-ship scene)
   (img+scene (ship-pos a-ship)
@@ -270,10 +270,7 @@ TODO:
                                (ship-travel-direction a-ship)
                                (ship-speed a-ship)
                                new-facing-direction
-                               (cond
-                                 [(key-pressed? "up") 1]
-                                 [(key-pressed? "down") -1]
-                                 [else 0]))]
+                               (if (key-pressed? "up") 1 0))]
          [bullets
           (cond
             [(and (key-pressed? " ")

@@ -39,8 +39,8 @@
  (check-equal-list? (add-direction-speeds 0 0 135 5)
                (list 135.0 5.0))
  (check-equal-list? (add-direction-speeds 0 0 225 5)
-               (list 225.0 5.0))
+               (list -135 5.0))
  (check-equal-list? (add-direction-speeds 0 0 295 5)
-               (list 295.0 5.0))
+               (list -65 5.0))
 
  ) 
