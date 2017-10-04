@@ -16,9 +16,20 @@
 (define (screen-y p) (+ (/ (point-y p) (point-z p)) (/ HEIGHT 2)))
 (define (screen-size size p)
   ;; How big does s appear at pos p?
+  ;; TODO: this should take into account distances x, y and z
   (if (> (point-z p) 0)
       (/ size (point-z p))
       0))
+
+(define (point-distance p1 p2)
+  (let ([dx (- (point-x p1) (point-x p2))]
+        [dy (- (point-y p1) (point-y p2))]
+        [dz (- (point-z p1) (point-z p2))])
+    (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+;; http://math.stackexchange.com/questions/42640/calculate-distance-in-3d-space
+
+;; -----------------------------------------------------------
+
 
 (define (move-point p dir dist)
   ;; Return new xyz by moving a distance in a direction
@@ -51,6 +62,7 @@
 
 (provide WIDTH HEIGHT
          screen-x screen-y screen-size
+         point-distance
          move-point add-points change-direction 
          (struct-out point)
          (struct-out direction))
