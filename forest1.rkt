@@ -19,7 +19,7 @@
 (require unstable/debug)
 
 ;; - to + of this value for new stars
-(define MAX-TREE-XY 25000)
+(define MAX-TREE-XY 500)
 
 (define MAX-TREES 25)
 (define MAX-ALIENS 10)
@@ -34,7 +34,7 @@
 
 (define score 0)
 
-(define (random-star-xy) (- (random MAX-TREE-XY) (/ MAX-TREE-XY 2)))
+(define (random-tree-xy) (- (random MAX-TREE-XY) (/ MAX-TREE-XY 2)))
 (define (random-angle) (* (random) 2 pi))
 
 ;; -----------------------------------------------------------
@@ -61,7 +61,7 @@
 ;; Stars and Aliens
 
 (define (new-tree)
-  (atree (point (random-star-xy)
+  (atree (point (random-tree-xy)
               0
               (+ (random START-Z) 10))))
 
@@ -181,10 +181,10 @@
                         scene))
          scene trees))
 
-(define (tree-size s)
-  (define z (round (point-z (atree-pos s))))
-  (cond [(> z 75) 1]
-        [else (+ 1 (/ (- 75 z) 1)) ]))
+(define (tree-size t)
+  (define d (abs (round (point-distance (atree-pos t) (point 0 0 0)))))
+  (cond [(> d 100) 1]
+        [else (+ 1 (/ (- 100 d) 4)) ]))
 
 (define (tree-colour s)
   (define z (round (point-z (atree-pos s))))
