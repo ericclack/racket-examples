@@ -5,10 +5,11 @@
 Asteroids - (go) to run.
 
 Left / right to rotate
-Up / down to speed up, slow down
+Up to thrust
 Space to fire.
 
 DONE:
+- Ship should carry on straight path even when turning
 - Multiple key presses, e.g. moving and shooting at the
   same time.
 - Some motivaton for the user to do more than just fire
@@ -16,7 +17,6 @@ DONE:
 
 TODO:
 - It's too hard to begin with
-- Ship should carry on straight path even when turning
 - Level up
 - Can leave bullets just sitting there (reverse and fire)
 - Lives
@@ -40,9 +40,9 @@ TODO:
 (define NUM-ASTEROIDS 3)
 (define BULLET-SPEED 5)
 (define SHIP-SIZE 30)
-(define MAX-BULLETS 25)
+(define MAX-BULLETS 15)
 (define ASTEROID-IMG (bitmap "images/space-pizza.png"))
-(define SPACESHIP-IMG (bitmap "images/spaceship.png"))
+(define SPACESHIP-IMG (bitmap "images/spaceship2.png"))
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
