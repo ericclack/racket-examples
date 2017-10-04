@@ -2,7 +2,7 @@
 
 (require rackunit)
 (require/expose "thrust1.rkt" (pos pos-x pos-y move-pos add-direction-speeds
-                                   inside-circle))
+                                   inside-circle? inside-rect? between?))
 
 (define (check-equal-pos? pos1 pos2)
   (check-= (pos-x pos1) (pos-x pos2) 0.01)
@@ -45,8 +45,3 @@
                (list -65 5.0))
 
  ) 
-
-(test-case
- "tests for inside circle"
- (check-true (inside-circle (pos 0 0) 9 (pos 7 7)))
- (check-false (inside-circle (pos 0 0) 10 (pos 8 8))))

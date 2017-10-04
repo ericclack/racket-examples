@@ -17,6 +17,7 @@ DONE:
 
 (require 2htdp/universe 2htdp/image)
 (require "util.rkt")
+(require "2d.rkt")
 
 ;; Debug
 (require unstable/debug)
@@ -81,11 +82,7 @@ DONE:
          [(< y (- 0 a-size)) (+ HEIGHT a-size)]
          [else y])))
 
-(define (inside-circle circle-pos radius a-pos)
-  (define distance
-    (sqrt (+ (expt (- (pos-x a-pos) (pos-x circle-pos)) 2)
-             (expt (- (pos-y a-pos) (pos-y circle-pos)) 2))))
-  (<= distance radius))
+
 
 (define (bullet-in-range a-bullet)
   (define x (pos-x (bullet-pos a-bullet)))
@@ -122,7 +119,7 @@ DONE:
     ;; Has this asteroid been hit by any of the bullets?
     (cond
       [(empty? bullets) #f]
-      [(inside-circle (asteroid-pos a) (asteroid-size a)
+      [(inside-circle? (asteroid-pos a) (asteroid-size a)
                       (bullet-pos (car bullets))) #t]
       [else
        (hit-asteroid? a (cdr bullets))]))
@@ -158,7 +155,7 @@ DONE:
   (define (bullet-hit? b asteroids)
     (cond
       [(empty? asteroids) #f]
-      [(inside-circle (asteroid-pos (car asteroids))
+      [(inside-circle? (asteroid-pos (car asteroids))
                       (asteroid-size (car asteroids))
                       (bullet-pos b)) #t]
       [else (bullet-hit? b (cdr asteroids))]))
@@ -286,7 +283,7 @@ DONE:
   (define (ship-hit-asteroids? asteroids)
     (cond
       [(empty? asteroids) #f]
-      [(inside-circle (asteroid-pos (car asteroids))
+      [(inside-circle? (asteroid-pos (car asteroids))
                       (+ (asteroid-size (car asteroids))
                          (/ SHIP-SIZE 2))
                       (ship-pos a-ship)) #t]
