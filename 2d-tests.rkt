@@ -22,6 +22,19 @@
  (check-false (inside-rect? (pos 100 0) (pos 95 1000) (pos 101 100)))
  )
 
-;;(test-case
-;; "tests for inside triangle"
-;; (check-true (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 50 50))))
+(test-case
+ "tests for "
+ (check-= (direction-from-a-to-b (pos 0 0) (pos 50 50))
+          45 0.01)
+ (check-= (direction-from-a-to-b (pos 0 0) (pos 0 50))
+          90 0.01)
+ (check-= (direction-from-a-to-b (pos 0 0) (pos -50 -50))
+          -135 0.01)
+ 
+ )
+
+(test-case
+ "tests for inside triangle"
+ (check-true (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 50 50)))
+ (check-false (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 51 50)))
+ (check-true (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 2.5 25))))
