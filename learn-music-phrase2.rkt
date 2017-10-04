@@ -64,7 +64,7 @@ TODO:
 (define STAVE-WIDTH 400)
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE 1.5)
+(define TICK-RATE 1)
 
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -14,6 +14,7 @@ DONE:
 - Show the note played, on the last play
 
 TODO:
+- Merge in updates from learn-music-phrases code
 - Fix display of extenders that should be hidden by
   stave lines
 - Sort easy-notes for better display, or show them on
@@ -43,10 +44,12 @@ TODO:
   '(e2 a3 d3 g3 b4 e4))
 ;; The initial set of easy notes for *me* to play - change this
 ;; to suit your needs
+;; When recalling note names: '(a3 c4 g4 e4 c3 a4 b4 f3)
 (define EASY-NOTES
-  '(c4 d4 f4 g4))
+  '())
+;;  '(a3 c4 g4 e4 c3 a4 b4 f3))
 ;; How likely to skip easy phrases (0-1)?
-(define SKIP-EASY-NOTES 0.7)
+(define SKIP-EASY-NOTES 1)
 
 ;; The canvas
 (define WIDTH 400)
@@ -54,7 +57,7 @@ TODO:
 (define G-CLEF (bitmap "GClef.png"))
 
 ;; How many seconds between notes? Change this to suit your needs
-(define TICK-RATE .75)
+(define TICK-RATE 2)
 
 (define PIX-PER-NOTE 11)
 (define PIX-BETWEEN-LINES (* 2 PIX-PER-NOTE))
