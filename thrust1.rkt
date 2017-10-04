@@ -24,7 +24,6 @@ DONE:
 (require racket/trace)
 
 (struct world (asteroids ship bullets score level) #:transparent)
-(struct pos (x y) #:transparent)
 (struct ship (pos facing-direction speed travel-direction) #:transparent)
 (struct asteroid (pos direction speed size) #:transparent)
 (struct bullet (pos direction speed) #:transparent)
