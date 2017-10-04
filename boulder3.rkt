@@ -7,16 +7,15 @@ Boulder Dash clone
 DONE:
 - Boulder falling on fred ends game
 - Reset level with r
+- Levels get harder
+- Dragons
 
 TODO:
+- Dragons - move more slowly
+- Dragons - kill fred
 - R to restart the same level, N for a new one
-- Levels get harder
-- Use get-block where appropriate / add get-blocksym?
-- Aliens?
 - Bombs?
-- Make levels harder as you progress
 - Save and load levels -- or use text encoding
-- Still inconsistent use of block for struct and symbol
 |#
 
 (require 2htdp/universe)
@@ -144,8 +143,7 @@ TODO:
   (random-choice
    (append
     (times-repeat (+ 5 (- 10 (* 2 level))) 'mud)
-    '(boulder boulder wall gem)
-    (times-repeat level 'dragon))))
+    '(boulder boulder wall gem dragon))))
 
 (define (make-landscape level)
   (for*/vector ([y (range HEIGHT)]
@@ -180,15 +178,17 @@ TODO:
     ))
 
 (define (dragons-move! a-landscape)
-  (define dragons (landscape-filter a-landscape is-dragon?))
-  (for ([d dragons])
-    (let* ([can-move (blanks-next-to a-landscape (block-pos d))]
-           [new-pos (random-choice can-move)])
-      (if new-pos
-          (begin
-            (clear-block! a-landscape (block-pos d))
-            (set-block! a-landscape (block 'dragon new-pos)))
-          #f))))
+  (if (< (random) 0.1)
+      (let ([dragons (landscape-filter a-landscape is-dragon?)])
+        (for ([d dragons])
+          (let* ([can-move (blanks-next-to a-landscape (block-pos d))]
+                 [new-pos (random-choice can-move)])
+            (if new-pos
+                (begin
+                  (clear-block! a-landscape (block-pos d))
+                  (set-block! a-landscape (block 'dragon new-pos)))
+                #f))))
+      #f))
   
 
 (define (next-world! w)
