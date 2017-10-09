@@ -23,7 +23,7 @@
  )
 
 (test-case
- "tests for "
+ "tests for direction-from-a-to-b"
  (check-= (direction-from-a-to-b (pos 0 0) (pos 50 50))
           45 0.01)
  (check-= (direction-from-a-to-b (pos 0 0) (pos 0 50))

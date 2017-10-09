@@ -4,6 +4,29 @@
 
 (struct pos (x y) #:transparent)
 
+(define (move-pos a-pos a-direction a-speed)
+  (define r (degrees->radians a-direction))
+  (pos (+ (pos-x a-pos) (* a-speed (cos r)))
+       (+ (pos-y a-pos) (* a-speed (sin r)))))
+
+(define (add-direction-speeds d1 s1 d2 s2)
+  ;; Given two direction & speed pairs, calculate the
+  ;; combined effect and return new direction and speed
+  (if (and (zero? s1) (zero? s2))
+      (list d1 0)
+      (let* ([vec1 (move-pos (pos 0 0) d1 s1)]
+             [vec2 (move-pos (pos 0 0) d2 s2)]
+             [c-vec (pos (+ (pos-x vec1) (pos-x vec2))
+                         (+ (pos-y vec1) (pos-y vec2)))]
+             [direction (radians->degrees
+                         (atan (pos-y c-vec)
+                               (pos-x c-vec)))]
+             [speed (sqrt (+ (sqr (pos-x c-vec))
+                             (sqr (pos-y c-vec))))])
+        (list direction speed))))
+
+;; -----------------------------------------------------------
+
 (define (inside-circle? circle-pos radius a-pos)
   (define distance
     (sqrt (+ (expt (- (pos-x a-pos) (pos-x circle-pos)) 2)
@@ -41,5 +64,6 @@
 ;; -----------------------------------------------------------
 
 (provide pos pos-x pos-y
+         move-pos add-direction-speeds 
          between? inside-circle? inside-rect? inside-triangle?
          direction-from-a-to-b)
