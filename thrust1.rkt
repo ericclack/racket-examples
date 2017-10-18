@@ -182,9 +182,9 @@ DONE:
              scene))
 
 (define (landscape+scene landscape scene)
-  (foldl (λ (b scene)
-           (place-image/align (polygon b "solid" "white")
-                              0 0 "left" "top" scene))
+  (foldl (λ (posns scene)
+           (scene+polygon scene
+                          posns "solid" "gray"))
          scene landscape))
 
 (define (asteroids+scene asteroids scene)
