@@ -15,7 +15,7 @@ DONE:
 
 |#
 
-(require 2htdp/universe 2htdp/image)
+(require 2htdp/universe 2htdp/image lang/posn)
 (require "util.rkt")
 (require "2d.rkt")
 
@@ -23,14 +23,13 @@ DONE:
 (require racket/trace)
 
 (struct world (landscape asteroids ship bullets score level) #:transparent)
-(struct land-tri (pos1 pos2 pos3) #:transparent)
 (struct ship (pos facing-direction speed travel-direction) #:transparent)
 (struct asteroid (pos direction speed size) #:transparent)
 (struct bullet (pos direction speed) #:transparent)
 
 (define LEVEL1 (list
-                (land-tri (pos 0 0) (pos 100 0) (pos 100 100))
-                (land-tri (pos 0 0) (pos 0 100) (pos 10 100))))
+                (list (make-posn 0 0) (make-posn 800 0) (make-posn 100 400))
+                (list (make-posn 500 500) (make-posn 800 500) (make-posn 800 600))))
 (define BIG-ASTEROID 50)
 (define NUM-ASTEROIDS 1)
 (define BULLET-SPEED 5)
@@ -182,7 +181,11 @@ DONE:
              (ship-img (ship-facing-direction a-ship))
              scene))
 
-(define (landscape+scene 
+(define (landscape+scene landscape scene)
+  (foldl (λ (b scene)
+           (place-image/align (polygon b "solid" "white")
+                              0 0 "left" "top" scene))
+         scene landscape))
 
 (define (asteroids+scene asteroids scene)
   (foldl (λ (a scene)
