@@ -2,6 +2,8 @@
 
 ;; Functions for 2d drawing and transformation
 
+(require lang/posn)
+
 (struct pos (x y) #:transparent)
 
 (define (move-pos a-pos a-direction a-speed)
@@ -24,6 +26,10 @@
              [speed (sqrt (+ (sqr (pos-x c-vec))
                              (sqr (pos-y c-vec))))])
         (list direction speed))))
+
+(define (pos->posn points)
+  (map (λ (p) (make-posn (pos-x p) (pos-y p)))
+       points))
 
 ;; -----------------------------------------------------------
 
@@ -50,20 +56,20 @@
     (radians->degrees
      (atan (pos-y vector) (pos-x vector)))))
 
-(define (inside-triangle? pos1 pos2 pos3 a-pos)
+(define (inside-triangle? points a-pos)
   "Is a-pos inside this triangle defined by the 3 points?"
-  (let* ([angle1-2 (direction-from-a-to-b pos1 pos2)]
-         [angle1-3 (direction-from-a-to-b pos1 pos3)]
-         [angle1-a (direction-from-a-to-b pos1 a-pos)]
-         [angle2-1 (direction-from-a-to-b pos2 pos1)]
-         [angle2-3 (direction-from-a-to-b pos2 pos3)]
-         [angle2-a (direction-from-a-to-b pos2 a-pos)])
+  (let* ([angle1-2 (direction-from-a-to-b (first points) (second points))]
+         [angle1-3 (direction-from-a-to-b (first points) (third points))]
+         [angle1-a (direction-from-a-to-b (first points) a-pos)]
+         [angle2-1 (direction-from-a-to-b (second points) (first points))]
+         [angle2-3 (direction-from-a-to-b (second points) (third points))]
+         [angle2-a (direction-from-a-to-b (second points) a-pos)])
     (and (between? angle1-a angle1-2 angle1-3)
          (between? angle2-a angle2-1 angle2-3))))
 
 ;; -----------------------------------------------------------
 
-(provide pos pos-x pos-y
+(provide pos pos-x pos-y pos->posn
          move-pos add-direction-speeds 
          between? inside-circle? inside-rect? inside-triangle?
          direction-from-a-to-b)

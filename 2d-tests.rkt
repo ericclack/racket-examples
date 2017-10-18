@@ -35,6 +35,9 @@
 
 (test-case
  "tests for inside triangle"
- (check-true (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 50 50)))
- (check-false (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 51 50)))
- (check-true (inside-triangle? (pos 0 0) (pos 100 100) (pos 5 50) (pos 2.5 25))))
+ (check-true (inside-triangle? (list (pos 0 0) (pos 100 100) (pos 5 50))
+                               (pos 50 50)))
+ (check-false (inside-triangle? (list (pos 0 0) (pos 100 100) (pos 5 50))
+                                (pos 51 50)))
+ (check-true (inside-triangle? (list (pos 0 0) (pos 100 100) (pos 5 50))
+                               (pos 2.5 25))))
