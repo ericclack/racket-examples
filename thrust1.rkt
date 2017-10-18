@@ -20,14 +20,17 @@ DONE:
 (require "2d.rkt")
 
 ;; Debug
-(require unstable/debug)
 (require racket/trace)
 
-(struct world (asteroids ship bullets score level) #:transparent)
+(struct world (landscape asteroids ship bullets score level) #:transparent)
+(struct land-tri (pos1 pos2 pos3) #:transparent)
 (struct ship (pos facing-direction speed travel-direction) #:transparent)
 (struct asteroid (pos direction speed size) #:transparent)
 (struct bullet (pos direction speed) #:transparent)
 
+(define LEVEL1 (list
+                (land-tri (pos 0 0) (pos 100 0) (pos 100 100))
+                (land-tri (pos 0 0) (pos 0 100) (pos 10 100))))
 (define BIG-ASTEROID 50)
 (define NUM-ASTEROIDS 1)
 (define BULLET-SPEED 5)
@@ -157,7 +160,8 @@ DONE:
   (define next-bullets (live-bullets (world-asteroids w) (world-bullets w)))
   (define add-score (asteroids-diff (world-asteroids w) next-asteroids))
   
-  (world (map move-asteroid next-asteroids)
+  (world (world-landscape w)
+         (map move-asteroid next-asteroids)
          (move-ship (world-ship w))
          (filter bullet-in-range (map move-bullet next-bullets))
          (+ add-score (world-score w))
@@ -177,6 +181,8 @@ DONE:
   (img+scene (ship-pos a-ship)
              (ship-img (ship-facing-direction a-ship))
              scene))
+
+(define (landscape+scene 
 
 (define (asteroids+scene asteroids scene)
   (foldl (λ (a scene)
@@ -205,10 +211,11 @@ DONE:
 
 (define (render-world w)
   (score+scene (world-score w) (world-level w)
-               (ship+scene (world-ship w)
-                           (asteroids+scene (world-asteroids w)
-                                            (bullets+scene (world-bullets w)
-                                                           (empty-scene WIDTH HEIGHT "black"))))))
+        (ship+scene (world-ship w)
+             (asteroids+scene (world-asteroids w)
+                       (bullets+scene (world-bullets w)
+                               (landscape+scene (world-landscape w)
+                                         (empty-scene WIDTH HEIGHT "black")))))))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -246,7 +253,8 @@ DONE:
                   (< (length (world-bullets w)) MAX-BULLETS)) 
              (cons (new-bullet a-ship) (world-bullets w))]
             [else (world-bullets w)])])
-    (world (world-asteroids w)
+    (world (world-landscape w)
+           (world-asteroids w)
            (ship (ship-pos a-ship) new-facing-direction
                  (second new-direction-speed)
                  (first new-direction-speed))
@@ -272,7 +280,7 @@ DONE:
   (define asteroids (times-repeat NUM-ASTEROIDS (new-asteroid)))
   (define a-ship (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0 0))
   (define a-world
-    (world asteroids a-ship '() 0 1))
+    (world LEVEL1 asteroids a-ship '() 0 1))
   (if (ship-crashed? a-world)
       (new-world)
       a-world))
