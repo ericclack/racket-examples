@@ -28,8 +28,8 @@ DONE:
 (struct bullet (pos direction speed) #:transparent)
 
 (define LEVEL1 (list
-                (list (make-posn 0 0) (make-posn 800 0) (make-posn 100 400))
-                (list (make-posn 500 500) (make-posn 800 500) (make-posn 800 600))))
+                (list (pos 0 0) (pos 800 0) (pos 100 400))
+                (list (pos 500 500) (pos 800 500) (pos 800 600))))
 (define BIG-ASTEROID 50)
 (define NUM-ASTEROIDS 1)
 (define BULLET-SPEED 5)
@@ -182,9 +182,9 @@ DONE:
              scene))
 
 (define (landscape+scene landscape scene)
-  (foldl (λ (posns scene)
+  (foldl (λ (points scene)
            (scene+polygon scene
-                          posns "solid" "gray"))
+                          (pos->posn points) "solid" "gray"))
          scene landscape))
 
 (define (asteroids+scene asteroids scene)
@@ -275,8 +275,14 @@ DONE:
                          (/ SHIP-SIZE 2))
                       (ship-pos a-ship)) #t]
       [else (ship-hit-asteroids? (cdr asteroids))]))
+  (define (ship-hit-landscape? landscape)
+    (cond
+      [(empty? landscape) #f]
+      [(inside-triangle? (car landscape) (ship-pos a-ship)) #t]
+      [else (ship-hit-landscape? (cdr landscape))]))
 
-  (ship-hit-asteroids? (world-asteroids w)))
+  (or (ship-hit-asteroids? (world-asteroids w))
+      (ship-hit-landscape? (world-landscape w))))
 
 (define (new-world)
   ;; Produce a world in which the ship has not just crashed
