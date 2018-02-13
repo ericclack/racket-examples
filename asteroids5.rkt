@@ -25,10 +25,6 @@ TODO:
 (require 2htdp/universe 2htdp/image)
 (require "util.rkt")
 
-;; Debug
-(require unstable/debug)
-(require racket/trace)
-
 (struct world (asteroids ship bullets score) #:transparent)
 (struct pos (x y) #:transparent)
 (struct ship (pos direction speed) #:transparent)
