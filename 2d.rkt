@@ -31,6 +31,10 @@
   (map (λ (p) (make-posn (pos-x p) (pos-y p)))
        points))
 
+(define (points-around-centre centre-pos radius step)
+  (for/list ([a (range 0 360 step)])
+            (move-pos centre-pos a radius)))
+
 ;; -----------------------------------------------------------
 
 (define (inside-circle? circle-pos radius a-pos)
@@ -70,6 +74,7 @@
 ;; -----------------------------------------------------------
 
 (provide pos pos-x pos-y pos->posn
-         move-pos add-direction-speeds 
+         move-pos add-direction-speeds
+         points-around-centre
          between? inside-circle? inside-rect? inside-triangle?
          direction-from-a-to-b)

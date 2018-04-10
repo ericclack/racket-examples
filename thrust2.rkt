@@ -9,6 +9,7 @@ Up to thrust
 Space to fire.
 
 TO DO:
+- Asteroids bounce off triangles
 - Refactor 2d stuff with vectors
 - Scroll around as you fly
 
@@ -33,7 +34,7 @@ DONE:
 
 ;; Each level is a list of triangles that represent the landscape
 (define LEVEL1 (list
-                (list (pos 0 0) (pos 800 0) (pos 200 250))
+                (list (pos 0 0) (pos 800 0) (pos 200 150))
                 (list (pos 500 500) (pos 800 500) (pos 800 600))
                 (list (pos 0 400) (pos 500 300) (pos 0 550))
                 (list (pos 600 300) (pos 700 350) (pos 650 375))
@@ -78,6 +79,10 @@ DONE:
   (and (> x 0) (< x WIDTH) (> y 0) (< y HEIGHT)))
 
 (define (move-asteroid a)
+ ;; (let* ([new-pos (wrap-pos
+ ;;                  (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
+ ;;                  (asteroid-size a))]
+ ;;        [new-pos-hit 
   (asteroid (wrap-pos
              (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
              (asteroid-size a))
@@ -288,9 +293,14 @@ DONE:
 
 (define (ship-points a-ship)
   ;; The most important points that make up the ship, for collision detection
-  ;; For now, a circle of points around the centre
-  (for/list ([a (range 0 360 30)])
-            (move-pos (ship-pos a-ship) a (/ SHIP-SIZE 2))))
+  (points-around-centre (ship-pos a-ship) (/ SHIP-SIZE 2) 30))
+
+(define (thing-hit-landscape? thing-points landscape)
+  (cond
+    [(empty? landscape) #f]
+    [(ormap (λ (p) (inside-triangle? (car landscape) p))
+            thing-points) #t]
+    [else (thing-hit-landscape? thing-points (cdr landscape))]))
 
 (define (ship-crashed? w)
   (define a-ship (world-ship w))
@@ -302,15 +312,9 @@ DONE:
                          (/ SHIP-SIZE 2))
                       (ship-pos a-ship)) #t]
       [else (ship-hit-asteroids? (cdr asteroids))]))
-  (define (ship-hit-landscape? landscape)
-    (cond
-      [(empty? landscape) #f]
-      [(ormap (λ (p) (inside-triangle? (car landscape) p))
-              (ship-points a-ship)) #t]
-      [else (ship-hit-landscape? (cdr landscape))]))
 
   (or (ship-hit-asteroids? (world-asteroids w))
-      (ship-hit-landscape? (world-landscape w))))
+      (thing-hit-landscape? (ship-points a-ship) (world-landscape w))))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
