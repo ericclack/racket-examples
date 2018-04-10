@@ -9,8 +9,7 @@ Up to thrust
 Space to fire.
 
 DONE:
-- Display landscape
-- Collision detection
+- Gravity
 - Scroll around as you fly
 
 |#
@@ -37,6 +36,8 @@ DONE:
 (define MAX-BULLETS 15)
 (define ASTEROID-IMG (bitmap "images/space-pizza.png"))
 (define SPACESHIP-IMG (bitmap "images/spaceship2.png"))
+(define GRAVITY-DIR 90)
+(define GRAVITY-MAG .05)
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -181,7 +182,7 @@ DONE:
 
 (define (ship-img a-direction)
   (rotate (- 0 a-direction)
-          (scale 3 SPACESHIP-IMG)))
+          (scale 2 SPACESHIP-IMG)))
 
 (define (ship+scene a-ship scene)
   (img+scene (ship-pos a-ship)
@@ -257,6 +258,10 @@ DONE:
                                (if (or (key-pressed? "up")
                                        (key-pressed? "t"))
                                    1 0))]
+         [new-direction-speed-w-gravity (add-direction-speeds
+                                         (first new-direction-speed)
+                                         (second new-direction-speed)
+                                         GRAVITY-DIR GRAVITY-MAG)]
          [bullets
           (cond
             [(and (key-pressed? " ")
@@ -266,8 +271,8 @@ DONE:
     (world (world-landscape w)
            (world-asteroids w)
            (ship (ship-pos a-ship) new-facing-direction
-                 (second new-direction-speed)
-                 (first new-direction-speed))
+                 (second new-direction-speed-w-gravity)
+                 (first new-direction-speed-w-gravity))
            bullets
            (world-score w)
            (world-level w))))
@@ -290,6 +295,8 @@ DONE:
 
   (or (ship-hit-asteroids? (world-asteroids w))
       (ship-hit-landscape? (world-landscape w))))
+
+;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (new-world)
   ;; Produce a world in which the ship has not just crashed
