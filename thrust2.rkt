@@ -9,12 +9,13 @@ Up to thrust
 Space to fire.
 
 TO DO:
-- Asteroids bounce off triangles
+- What's wrong with the little triangle and collisions?
 - Refactor 2d stuff with vectors
 - Scroll around as you fly
 
 
 DONE:
+- Asteroids bounce don't travel through triangles
 - Gravity
 - Better collision detection, not just centre of ship
 
@@ -34,13 +35,21 @@ DONE:
 
 ;; Each level is a list of triangles that represent the landscape
 (define LEVEL1 (list
+                (list (pos 0 0) (pos 800 0) (pos 200 50))
+                (list (pos 500 500) (pos 800 500) (pos 800 600))
+                (list (pos 0 400) (pos 300 300) (pos 0 550))
+                (list (pos 600 300) (pos 700 350) (pos 650 375))
+                ))
+
+(define LEVEL2 (list
                 (list (pos 0 0) (pos 800 0) (pos 200 150))
                 (list (pos 500 500) (pos 800 500) (pos 800 600))
                 (list (pos 0 400) (pos 500 300) (pos 0 550))
                 (list (pos 600 300) (pos 700 350) (pos 650 375))
                 ))
+
 (define BIG-ASTEROID 50)
-(define NUM-ASTEROIDS 1)
+(define NUM-ASTEROIDS 3)
 (define BULLET-SPEED 5)
 (define SHIP-SIZE 30)
 (define MAX-BULLETS 15)
@@ -83,11 +92,16 @@ DONE:
                    (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
                    (asteroid-size a))]
          [new-pos-a-hit? (thing-hit-landscape? (list new-pos) landscape)])
-         
-    (asteroid (if new-pos-a-hit? (asteroid-pos a) new-pos)
-              (asteroid-direction a)
-              (asteroid-speed a)
-              (asteroid-size a))))
+    (if new-pos-a-hit?
+        ;; bounce
+        (asteroid (asteroid-pos a)
+                  (- (asteroid-direction a) 180)
+                  (asteroid-speed a)
+                  (asteroid-size a))
+        (asteroid new-pos
+                  (asteroid-direction a)
+                  (asteroid-speed a)
+                  (asteroid-size a)))))
 
 (define (new-bullet a-ship)
   (bullet (ship-pos a-ship)
@@ -270,7 +284,7 @@ DONE:
                                new-facing-direction
                                (if (or (key-pressed? "up")
                                        (key-pressed? "t"))
-                                   1 0))]
+                                   0.5 0))]
          [new-direction-speed-w-gravity (add-direction-speeds
                                          (first new-direction-speed)
                                          (second new-direction-speed)
