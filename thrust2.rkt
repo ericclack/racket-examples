@@ -47,7 +47,7 @@ DONE:
 (define ASTEROID-IMG (bitmap "images/space-pizza.png"))
 (define SPACESHIP-IMG (bitmap "images/spaceship2.png"))
 (define GRAVITY-DIR 90)
-(define GRAVITY-MAG .05)
+(define GRAVITY-MAG .01)
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -78,17 +78,16 @@ DONE:
   (define y (pos-y (bullet-pos a-bullet)))
   (and (> x 0) (< x WIDTH) (> y 0) (< y HEIGHT)))
 
-(define (move-asteroid a)
- ;; (let* ([new-pos (wrap-pos
- ;;                  (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
- ;;                  (asteroid-size a))]
- ;;        [new-pos-hit 
-  (asteroid (wrap-pos
-             (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
-             (asteroid-size a))
-            (asteroid-direction a)
-            (asteroid-speed a)
-            (asteroid-size a)))
+(define (move-asteroid a landscape)
+  (let* ([new-pos (wrap-pos
+                   (move-pos (asteroid-pos a) (asteroid-direction a) (asteroid-speed a))
+                   (asteroid-size a))]
+         [new-pos-a-hit? (thing-hit-landscape? (list new-pos) landscape)])
+         
+    (asteroid (if new-pos-a-hit? (asteroid-pos a) new-pos)
+              (asteroid-direction a)
+              (asteroid-speed a)
+              (asteroid-size a))))
 
 (define (new-bullet a-ship)
   (bullet (ship-pos a-ship)
@@ -182,7 +181,7 @@ DONE:
   (define add-score (asteroids-diff (world-asteroids w) next-asteroids))
   
   (world (world-landscape w)
-         (map move-asteroid next-asteroids)
+         (map (λ (a) (move-asteroid a (world-landscape w))) next-asteroids)
          (move-ship (world-ship w))
          (filter bullet-in-range (map move-bullet next-bullets))
          (+ add-score (world-score w))
