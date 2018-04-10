@@ -8,9 +8,14 @@ Left / right to rotate
 Up to thrust
 Space to fire.
 
+TO DO:
+- Refactor 2d stuff with vectors
+- Scroll around as you fly
+
+
 DONE:
 - Gravity
-- Scroll around as you fly
+- Better collision detection, not just centre of ship
 
 |#
 
@@ -26,9 +31,13 @@ DONE:
 (struct asteroid (pos direction speed size) #:transparent)
 (struct bullet (pos direction speed) #:transparent)
 
+;; Each level is a list of triangles that represent the landscape
 (define LEVEL1 (list
                 (list (pos 0 0) (pos 800 0) (pos 200 250))
-                (list (pos 500 500) (pos 800 500) (pos 800 600))))
+                (list (pos 500 500) (pos 800 500) (pos 800 600))
+                (list (pos 0 400) (pos 500 300) (pos 0 550))
+                (list (pos 600 300) (pos 700 350) (pos 650 375))
+                ))
 (define BIG-ASTEROID 50)
 (define NUM-ASTEROIDS 1)
 (define BULLET-SPEED 5)
@@ -277,6 +286,12 @@ DONE:
            (world-score w)
            (world-level w))))
 
+(define (ship-points a-ship)
+  ;; The most important points that make up the ship, for collision detection
+  ;; For now, a circle of points around the centre
+  (for/list ([a (range 0 360 30)])
+            (move-pos (ship-pos a-ship) a (/ SHIP-SIZE 2))))
+
 (define (ship-crashed? w)
   (define a-ship (world-ship w))
   (define (ship-hit-asteroids? asteroids)
@@ -290,7 +305,8 @@ DONE:
   (define (ship-hit-landscape? landscape)
     (cond
       [(empty? landscape) #f]
-      [(inside-triangle? (car landscape) (ship-pos a-ship)) #t]
+      [(ormap (λ (p) (inside-triangle? (car landscape) p))
+              (ship-points a-ship)) #t]
       [else (ship-hit-landscape? (cdr landscape))]))
 
   (or (ship-hit-asteroids? (world-asteroids w))
@@ -301,7 +317,7 @@ DONE:
 (define (new-world)
   ;; Produce a world in which the ship has not just crashed
   (define asteroids (times-repeat NUM-ASTEROIDS (new-asteroid)))
-  (define a-ship (ship (pos (/ WIDTH 2) (/ HEIGHT 2)) 0 0 0))
+  (define a-ship (ship (pos 400 200) 0 0 0))
   (define a-world
     (world LEVEL1 asteroids a-ship '() 0 1))
   (if (ship-crashed? a-world)
