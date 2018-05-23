@@ -31,6 +31,21 @@
   (map (λ (p) (make-posn (pos-x p) (pos-y p)))
        points))
 
+(define (pos-dx a-pos b-pos)
+  (- (pos-x b-pos) (pos-x a-pos)))
+
+(define (pos-dy a-pos b-pos)
+  (- (pos-y b-pos) (pos-y a-pos)))
+
+(define (angle-between a-pos b-pos)
+  (radians->degrees
+   (atan (pos-dy a-pos b-pos)
+         (pos-dx a-pos b-pos))))
+
+(define (distance-between a-pos b-pos)
+  (sqrt (+ (sqr (pos-dx a-pos b-pos))
+           (sqr (pos-dy a-pos b-pos)))))
+
 (define (points-around-centre centre-pos radius step)
   (for/list ([a (range 0 360 step)])
             (move-pos centre-pos a radius)))
@@ -56,7 +71,7 @@
 (define (direction-from-a-to-b pos1 pos2)
   "What's the direction/bearing from pos1 to pos2?"
   (let ([vector (pos (- (pos-x pos2) (pos-x pos1))
-                      (- (pos-y pos2) (pos-y pos1)))])
+                     (- (pos-y pos2) (pos-y pos1)))])
     (radians->degrees
      (atan (pos-y vector) (pos-x vector)))))
 
@@ -74,7 +89,7 @@
 ;; -----------------------------------------------------------
 
 (provide pos pos-x pos-y pos->posn
-         move-pos add-direction-speeds
+         move-pos add-direction-speeds angle-between distance-between
          points-around-centre
          between? inside-circle? inside-rect? inside-triangle?
          direction-from-a-to-b)

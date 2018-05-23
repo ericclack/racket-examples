@@ -4,6 +4,19 @@
 (require "2d.rkt")
 
 (test-case
+ "tests pos to angles and distances"
+ (check-= (angle-between (pos 100 100) (pos 100 200))
+          90 0.01)
+ (check-= (angle-between (pos 100 100) (pos 150 150))
+          45 0.01)
+ (check-= (distance-between (pos 100 100) (pos 200 100))
+          100 0.01)
+ (check-= (distance-between (pos 0 0) (pos 100 100))
+          141.42 0.01))
+
+;; ---------------------------------------------------------
+
+(test-case
  "tests for between"
  (check-true (between? 5 3 12))
  (check-true (between? 9 11 9)))
