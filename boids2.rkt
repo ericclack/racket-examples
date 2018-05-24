@@ -11,8 +11,7 @@ TODO:
 (require "util.rkt")
 (require "2d.rkt")
 
-(struct world (boids) #:transparent)
-(struct pos (x y) #:transparent)
+(struct world (boids mousex mousey) #:transparent)
 (struct boid (pos direction speed size) #:transparent)
 
 (define BIG-BOID 20)
@@ -56,15 +55,17 @@ TODO:
         (boid-speed a)
         (boid-size a)))
 
-(define (avoid-boid-collisions all-boids)
+(define (avoid-boid-collisions all-boids mousex mousey)
   ;; Adjust boid speed and direction to avoid collisions
 
   (define (apply-force a-boid)
-    ;; Other boids in the world apply a force to this boid
+    ;; The mouse position applies a force to this boid
     ;; based on distance and angle between each
+    (define angle (direction-from-a-to-b (boid-pos a-boid)
+                                         (pos mousex mousey)))
     (define new-d-s (add-direction-speeds
                      (boid-direction a-boid) (boid-speed a-boid)
-                     135 .1))
+                     angle .1))
                      
     (boid (boid-pos a-boid)
           (first new-d-s)
@@ -73,9 +74,17 @@ TODO:
   
   (map apply-force all-boids))
 
+;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 (define (next-world w)
   (world (map move-boid
-              (avoid-boid-collisions  (world-boids w)))))
+              (avoid-boid-collisions (world-boids w)
+                                     (world-mousex w)
+                                     (world-mousey w)))
+         (world-mousex w) (world-mousey w)))
+
+(define (mouse-event w x y e)
+  (world (world-boids w) x y))
 
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;; Rendering
@@ -97,6 +106,7 @@ TODO:
 ;; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (go)
-  (big-bang (world (times-repeat NUM-BOIDS (new-boid)))
+  (big-bang (world (times-repeat NUM-BOIDS (new-boid)) 0 0)
             (on-tick next-world TICK-RATE)
+            (on-mouse mouse-event)
             (to-draw render-world)))
