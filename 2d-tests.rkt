@@ -9,6 +9,13 @@
           90 0.01)
  (check-= (angle-between (pos 100 100) (pos 150 150))
           45 0.01)
+ (check-= (angle-between (pos 0 0) (pos 50 50))
+          45 0.01)
+ (check-= (angle-between (pos 0 0) (pos 0 50))
+          90 0.01)
+ (check-= (angle-between (pos 0 0) (pos -50 -50))
+          -135 0.01)
+
  (check-= (distance-between (pos 100 100) (pos 200 100))
           100 0.01)
  (check-= (distance-between (pos 0 0) (pos 100 100))
@@ -33,17 +40,6 @@
  (check-false (inside-rect? (pos 0 0) (pos 100 10) (pos 101 10)))
  (check-true (inside-rect? (pos 50 -10) (pos -50 0) (pos 0 -5)))
  (check-false (inside-rect? (pos 100 0) (pos 95 1000) (pos 101 100)))
- )
-
-(test-case
- "tests for direction-from-a-to-b"
- (check-= (direction-from-a-to-b (pos 0 0) (pos 50 50))
-          45 0.01)
- (check-= (direction-from-a-to-b (pos 0 0) (pos 0 50))
-          90 0.01)
- (check-= (direction-from-a-to-b (pos 0 0) (pos -50 -50))
-          -135 0.01)
- 
  )
 
 (test-case

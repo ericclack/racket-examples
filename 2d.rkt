@@ -68,21 +68,14 @@
   (and (between? (pos-x a-pos) (pos-x rpos1) (pos-x rpos2))
        (between? (pos-y a-pos) (pos-y rpos1) (pos-y rpos2))))
 
-(define (direction-from-a-to-b pos1 pos2)
-  "What's the direction/bearing from pos1 to pos2?"
-  (let ([vector (pos (- (pos-x pos2) (pos-x pos1))
-                     (- (pos-y pos2) (pos-y pos1)))])
-    (radians->degrees
-     (atan (pos-y vector) (pos-x vector)))))
-
 (define (inside-triangle? points a-pos)
   "Is a-pos inside this triangle defined by the 3 points?"
-  (let* ([angle1-2 (direction-from-a-to-b (first points) (second points))]
-         [angle1-3 (direction-from-a-to-b (first points) (third points))]
-         [angle1-a (direction-from-a-to-b (first points) a-pos)]
-         [angle2-1 (direction-from-a-to-b (second points) (first points))]
-         [angle2-3 (direction-from-a-to-b (second points) (third points))]
-         [angle2-a (direction-from-a-to-b (second points) a-pos)])
+  (let* ([angle1-2 (angle-between (first points) (second points))]
+         [angle1-3 (angle-between (first points) (third points))]
+         [angle1-a (angle-between (first points) a-pos)]
+         [angle2-1 (angle-between (second points) (first points))]
+         [angle2-3 (angle-between (second points) (third points))]
+         [angle2-a (angle-between (second points) a-pos)])
     (and (between? angle1-a angle1-2 angle1-3)
          (between? angle2-a angle2-1 angle2-3))))
 
@@ -91,5 +84,4 @@
 (provide pos pos-x pos-y pos->posn
          move-pos add-direction-speeds angle-between distance-between
          points-around-centre
-         between? inside-circle? inside-rect? inside-triangle?
-         direction-from-a-to-b)
+         between? inside-circle? inside-rect? inside-triangle?)
