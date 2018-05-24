@@ -55,17 +55,27 @@ TODO:
         (boid-speed a)
         (boid-size a)))
 
+(define (distance-force d)
+  ;; What force applied for distance d
+  (define force-limit 100)
+  (if (< d force-limit)
+      (- (/ (- force-limit d)
+            (* 2 force-limit)))
+      0))
+
 (define (avoid-boid-collisions all-boids mousex mousey)
   ;; Adjust boid speed and direction to avoid collisions
 
   (define (apply-force a-boid)
     ;; The mouse position applies a force to this boid
     ;; based on distance and angle between each
-    (define angle (direction-from-a-to-b (boid-pos a-boid)
-                                         (pos mousex mousey)))
+    (define angle (angle-between (boid-pos a-boid)
+                                 (pos mousex mousey)))
+    (define mag (distance-force (distance-between (boid-pos a-boid)
+                                                  (pos mousex mousey))))
     (define new-d-s (add-direction-speeds
                      (boid-direction a-boid) (boid-speed a-boid)
-                     angle .1))
+                     angle mag))
                      
     (boid (boid-pos a-boid)
           (first new-d-s)
