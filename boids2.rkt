@@ -63,7 +63,7 @@ TODO:
             (* 2 force-limit)))
       0))
 
-(define (avoid-boid-collisions all-boids mousex mousey)
+(define (avoid-mouse all-boids mousex mousey)
   ;; Adjust boid speed and direction to avoid collisions
 
   (define (apply-force a-boid)
@@ -88,9 +88,9 @@ TODO:
 
 (define (next-world w)
   (world (map move-boid
-              (avoid-boid-collisions (world-boids w)
-                                     (world-mousex w)
-                                     (world-mousey w)))
+              (avoid-mouse (world-boids w)
+                           (world-mousex w)
+                           (world-mousey w)))
          (world-mousex w) (world-mousey w)))
 
 (define (mouse-event w x y e)
