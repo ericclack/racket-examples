@@ -96,9 +96,9 @@ TODO:
       (map (λ (b)
              (list (angle-between (boid-pos a-boid)
                                   (boid-pos b))
-                   (distance-force (distance-between
-                                    (boid-pos a-boid)
-                                    (boid-pos b)))))
+                   (- (distance-force (distance-between
+                                       (boid-pos a-boid)
+                                       (boid-pos b))))))
            (remove a-boid all-boids)))
     
     (define (cumulative-force angle-mag a-boid)
