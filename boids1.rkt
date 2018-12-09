@@ -1,10 +1,16 @@
 #lang racket
 
-#|
+#| Boids - bird like objects - https://en.wikipedia.org/wiki/Boids
 
-TODO:
-- Score
-- Moving ship
+Version 1: Just some circles moving in straight lines
+
+Run (go) to start.
+
+--
+
+Copyright 2018, Eric Clack, eric@bn7.net
+This program is distributed under the terms of the GNU General
+Public License
 |#
 
 (require 2htdp/universe 2htdp/image)

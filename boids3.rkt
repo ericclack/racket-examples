@@ -1,10 +1,16 @@
 #lang racket
 
-#|
+#| Boids - bird like objects - https://en.wikipedia.org/wiki/Boids
 
-TODO:
-- Score
-- Moving ship
+Version 3: Boids like each other, but don't like the mouse.
+
+Run (go) to start.
+
+--
+
+Copyright 2018, Eric Clack, eric@bn7.net
+This program is distributed under the terms of the GNU General
+Public License
 |#
 
 (require 2htdp/universe 2htdp/image)
@@ -15,7 +21,7 @@ TODO:
 (struct boid (pos direction speed size) #:transparent)
 
 (define BIG-BOID 20)
-(define NUM-BOIDS 15)
+(define NUM-BOIDS 10)
 
 (define TICK-RATE 1/30)
 (define WIDTH 800)
@@ -55,13 +61,21 @@ TODO:
         (boid-speed a)
         (boid-size a)))
 
-(define (distance-force d)
+(define (boid-distance-force d)
   ;; What force applied for distance d
-  (define force-limit 100)
-  (if (< d force-limit)
-      (- (/ (- force-limit d)
-            (* 2 force-limit)))
-      0))
+  (cond
+    [(< d 30) 1]
+    [(< d 50) .1]
+    [(< d 100) -.1]
+    [(< d 200) -.05]
+    [else 0]))
+
+(define (mouse-distance-force d)
+  ;; What force applied for distance d
+  (cond
+    [(< d 50) -.5]
+    [(< d 100) -.1]
+    [else 0]))
 
 (define (apply-force a-boid angle mag)
   ;; Apply force with mag at angle to a-boid
@@ -71,7 +85,7 @@ TODO:
                      
   (boid (boid-pos a-boid)
         (first new-d-s)
-        (second new-d-s)
+        (min 3 (second new-d-s)) ; max speed 
         (boid-size a-boid)))
 
 (define (avoid-mouse all-boids mousex mousey)
@@ -82,21 +96,20 @@ TODO:
     ;; based on distance and angle between each
     (define angle (angle-between (boid-pos a-boid)
                                  (pos mousex mousey)))
-    (define mag (distance-force (distance-between (boid-pos a-boid)
-                                                  (pos mousex mousey))))
+    (define mag (mouse-distance-force (distance-between (boid-pos a-boid)
+                                                        (pos mousex mousey))))
     (apply-force a-boid angle mag))
   
   (map -avoid-mouse all-boids))
 
 (define (avoid-collisions all-boids)
-
   (define (-avoid-collisions a-boid)
     ;; Get a list of angle/mag pairs between this boid and world
     (define angles-mags
       (map (λ (b)
              (list (angle-between (boid-pos a-boid)
                                   (boid-pos b))
-                   (- (distance-force (distance-between
+                   (- (boid-distance-force (distance-between
                                        (boid-pos a-boid)
                                        (boid-pos b))))))
            (remove a-boid all-boids)))
