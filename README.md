@@ -1,7 +1,7 @@
 # racket-examples
 A set of example Racket games, mostly created to help me learn Racket, but maybe useful to others?
 
-My starting place for learnng Racket was the books: Realm of Racket http://www.realmofracket.com/, The Little Schemer and The Seasoned Schemer https://mitpress.mit.edu/books/little-schemer-fourth-edition
+My starting place for learning Racket was the books: Realm of Racket http://www.realmofracket.com/, The Little Schemer and The Seasoned Schemer https://mitpress.mit.edu/books/little-schemer-fourth-edition
 
 After that I created a set of games / demos (which you'll find in this repo), to help me prove I understood the principles and explore the language further. The games are pretty basic, but hopefully interesting to explore.
 
