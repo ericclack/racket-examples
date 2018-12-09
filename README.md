@@ -17,6 +17,10 @@ Contents:
 
 ![asteroids screen shot](/images/asteroids5.png)
 
+* `boulder` -- a take on Boulder Dash.
+
+![boulder screen shot](/images/boulder2-screenshot.png)
+
 * `learn-music` -- learn to read music with the guitar. Read more on my blog: http://ericclack.blogspot.co.uk/2015/12/learn-to-read-music-with-racket-scheme.html
 
 * `learn-music-phrase` -- like `learn-music` but presents sequences of notes to practice.
