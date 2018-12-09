@@ -31,5 +31,9 @@ Contents:
 
 ![stars screen shot](/images/stars7.png)
 
+* `thrust` -- a take on the game Thrust from 1986.
+
+---
+
 Many of the app filenames have numbers, these indicate major changes -- 
 so it's easy to look back at previous, simpler versions.
