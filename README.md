@@ -17,6 +17,8 @@ Contents:
 
 ![asteroids screen shot](/images/asteroids5.png)
 
+* `boids` -- bird like objects that flock together. 
+
 * `boulder` -- a take on Boulder Dash.
 
 ![boulder screen shot](/images/boulder2-screenshot.png)
