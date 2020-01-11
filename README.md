@@ -1,5 +1,5 @@
 # racket-examples
-A set of example Racket games, mostly created to help me learn Racket, but maybe useful to explore to help you learn too?
+A set of example Racket games and demos that I created on my journey learning Racket. They use the [How to Design Programs](https://htdp.org/2019-02-24/) framework and demonstrate sprites, worlds, animation and game logic. 
 
 My starting place for learning Racket was the books: Realm of Racket http://www.realmofracket.com/, The Little Schemer and The Seasoned Schemer https://mitpress.mit.edu/books/little-schemer-fourth-edition
 
